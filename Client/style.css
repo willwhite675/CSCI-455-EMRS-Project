@@ -1,0 +1,39 @@
+body{
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+
+    .loginPanel{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 20rem;
+        width: 20rem;
+        border: black solid 1px;
+    }
+    .usernameContainer, .passwordContainer{
+        display: flex;
+        flex-direction: column;
+    }
+    #username, #password{
+        margin: .5rem;
+        overflow-y: hidden;
+        resize: none;
+        line-height: 1.5em;
+        max-height: 4.5em;
+    }
+    .logo{
+        border: black solid 2px;
+        border-radius: 50%;
+        height: 4rem;
+        width: 4rem;
+        align-content: center;
+        text-align: center;
+        margin-top: 1rem;
+    }
+
+}
