@@ -11,20 +11,21 @@ body{
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 20rem;
-        width: 20rem;
+        height: 25rem;
+        width: 25rem;
         border: black solid 1px;
     }
     .usernameContainer, .passwordContainer{
         display: flex;
         flex-direction: column;
+        text-align: center;
     }
     #username, #password{
         margin: .5rem;
         overflow-y: hidden;
         resize: none;
         line-height: 1.5em;
-        max-height: 4.5em;
+        max-height: 1.5em;
     }
     .logo{
         border: black solid 2px;
@@ -34,6 +35,9 @@ body{
         align-content: center;
         text-align: center;
         margin-top: 1rem;
+    }
+    .submitButtonContainer{
+        padding-top: 1rem;
     }
 
 }
