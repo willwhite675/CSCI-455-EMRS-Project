@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "build": "tsc --project tsconfig.dashboard.json && tsc --project tsconfig.login.json"
+  }
+}
