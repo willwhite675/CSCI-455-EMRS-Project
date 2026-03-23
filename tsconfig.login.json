@@ -1,0 +1,9 @@
+{
+
+  "compilerOptions": {
+    "outDir": "client/public/login"
+  },
+  "include": [
+    "client/public/src/login.ts"
+  ]
+}
