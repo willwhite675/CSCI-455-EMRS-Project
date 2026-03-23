@@ -1,9 +1,0 @@
-{
-
-  "compilerOptions": {
-    "outDir": "client/public/dashboard",
-  },
-  "include": [
-    "client/public/src/dashboard.ts"
-  ]
-}
