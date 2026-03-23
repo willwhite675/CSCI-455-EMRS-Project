@@ -1,5 +1,13 @@
 {
   "scripts": {
-    "build": "tsc --project tsconfig.dashboard.json && tsc --project tsconfig.login.json"
+    "build": "tsc --project config/tsconfig.dashboard.json && tsc --project config/tsconfig.login.json",
+    "db:setup": "node -e \"console.log('Run the SQL file in db/schema.sql on your local MariaDB instance')\""
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "mariadb": "^3.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0"
   }
 }
