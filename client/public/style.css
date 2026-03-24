@@ -1,0 +1,33 @@
+body {
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+.navLink {
+    display: block;
+    color: black;
+    text-decoration: none;
+    font-size: 1.5rem;
+    border-bottom: 3px solid black;
+    padding: 1rem;
+    width: 15rem;
+    justify-items: center;
+}
+.navLink:hover {
+    background-color: black;
+    color: white;
+}
+#navContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    height: 100vh;
+    overflow-y: auto;
+    margin-right: 1rem;
+    border-right: 3px solid black;
+}
+
+ul {
+    padding-inline-start: 0;
+}
