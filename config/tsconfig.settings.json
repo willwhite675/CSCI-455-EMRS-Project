@@ -1,0 +1,9 @@
+{
+  "compilerOptions":{
+    "outDir": "../client/public/settings",
+    "rootDir": "../client/public/src"
+  },
+  "include":[
+    "../client/public/src/settings.ts"
+  ]
+}

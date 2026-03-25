@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "outDir": "../client/public"
-  },
-  "include": [
-    "../client/public/src/navBar.ts"
-  ],
-  "exclude": []
-}

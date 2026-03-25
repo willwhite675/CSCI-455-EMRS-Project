@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "outDir": "../client/public",
+    "rootDir": "../client/public/src"
+  },
+  "include": [
+    "../client/public/src/sideNavBar.ts"
+  ],
+  "exclude": []
+}

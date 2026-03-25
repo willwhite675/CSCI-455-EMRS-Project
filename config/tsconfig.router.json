@@ -1,10 +1,11 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../client/public/dashboard",
+    "outDir": "../client/public",
     "rootDir": "../client/public/src"
   },
   "include": [
-    "../client/public/src/dashboard.ts"
-  ]
+    "../client/public/src/router.ts"
+  ],
+  "exclude": []
 }

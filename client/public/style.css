@@ -1,10 +1,79 @@
 body {
-    display: flex;
     margin: 0;
     padding: 0;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
-.navLink {
+ul {
+    padding-inline-start: 0;
+    margin: 0;
+}
+
+#pageContent {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.container {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+#topNavContainer {
+    display: flex;
+    flex-direction: row;
+    background-color: #ffffff;
+    padding: 1rem;
+    border-bottom: 3px solid black;
+    align-items: center;
+}
+
+.topNavBar {
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: row;
+    width: 100%;
+
+    button{
+        cursor: pointer;
+        background-color: transparent;
+        border: 3px solid black;
+    }
+}
+
+.topNavElement {
+    margin-right: .5rem;
+    margin-left: .5rem;
+    height: 4rem;
+    font-size: 1.25rem;
+    padding: 1rem;
+}
+
+.topNavElement:hover {
+    background-color: #cccaca;
+}
+
+#pageName {
+    text-wrap: nowrap;
+}
+
+#sideNavContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    overflow-y: auto;
+    margin-right: 1rem;
+    border-right: 3px solid black;
+
+
+}
+
+.sideNavLink {
     display: block;
     color: black;
     text-decoration: none;
@@ -14,20 +83,20 @@ body {
     width: 15rem;
     justify-items: center;
 }
-.navLink:hover {
+
+.sideNavLink:hover {
     background-color: black;
     color: white;
 }
-#navContainer {
+
+.sideNavBar {
     display: flex;
     flex-direction: column;
-    align-items: start;
-    height: 100vh;
-    overflow-y: auto;
-    margin-right: 1rem;
-    border-right: 3px solid black;
-}
-
-ul {
-    padding-inline-start: 0;
+    height: 100%;
+    justify-content: space-between;
+    #logout{
+        border-top: 3px solid black;
+        align-items: flex-end;
+        border-bottom: none;
+    }
 }

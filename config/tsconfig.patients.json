@@ -1,0 +1,9 @@
+{
+  "compilerOptions":{
+    "outDir": "../client/public/patients",
+    "rootDir": "../client/public/src"
+  },
+  "include":[
+    "../client/public/src/patients.ts"
+  ]
+}

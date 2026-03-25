@@ -7,7 +7,7 @@
     <title>Health Inc</title>
 </head>
 <body>
-<div class="loginPanel">
+<div class="loginContainer">
     <div class="logo">
         <span>Health Inc</span>
     </div>
@@ -25,5 +25,12 @@
     </div>
 </div>
 <script src="login.js"></script>
+<script src="../router.js"></script>
+<script>
+    if (typeof Router !== 'undefined') {
+        new Router('pageContent');
+    }
+</script>
+
 </body>
 </html>
