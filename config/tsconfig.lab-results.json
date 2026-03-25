@@ -1,0 +1,8 @@
+{
+  "compilerOptions":{
+    "outDir": "../client/public/lab-results"
+  },
+  "include":[
+    "../client/public/src/lab-results.ts"
+  ]
+}

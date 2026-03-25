@@ -3,7 +3,7 @@
     "outDir": "../client/public"
   },
   "include": [
-    "../client/public/src/navBar.ts"
+    "../client/public/src/sideNavBar.ts"
   ],
   "exclude": []
 }

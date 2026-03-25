@@ -7,7 +7,7 @@ body{
     overflow: hidden;
     scale: 1.2;
 
-    .loginPanel{
+    .loginContainer{
         display: flex;
         flex-direction: column;
         justify-content: center;

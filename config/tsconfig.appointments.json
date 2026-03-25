@@ -1,0 +1,8 @@
+{
+  "compilerOptions":{
+    "outDir": "../client/public/appointments"
+  },
+  "include":[
+    "../client/public/src/appointments.ts"
+  ]
+}
