@@ -1,6 +1,7 @@
 {
   "compilerOptions":{
-    "outDir": "../client/public"
+    "outDir": "../client/public",
+    "rootDir": "../client/public/src"
   },
   "include":[
     "../client/public/src/topNavBar.ts"

@@ -1,6 +1,7 @@
 {
   "compilerOptions":{
-    "outDir": "../client/public/billing"
+    "outDir": "../client/public/billing",
+    "rootDir": "../client/public/src"
   },
   "include":[
     "../client/public/src/billing.ts"
