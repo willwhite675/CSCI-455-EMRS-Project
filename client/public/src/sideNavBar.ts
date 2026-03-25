@@ -9,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <a href="../billing/billing.html" class="sideNavLink">Billing</a>
         <a href="../settings/settings.html" class="sideNavLink">Settings</a>
       </ul>
+        <a href="../login/login.html" class="sideNavLink" id="logout">Logout</a>
     </nav>
     `;
 
