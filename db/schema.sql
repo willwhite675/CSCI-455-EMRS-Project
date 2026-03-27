@@ -6,3 +6,5 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL
     );
+INSERT INTO users (username, password) VALUES ('Bob', 'Donuts');
+INSERT INTO users (username, password) VALUES ('Jesse', 'McCree');
