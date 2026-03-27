@@ -44,10 +44,26 @@ form.addEventListener("submit", function (event) { return __awaiter(_this, void 
         event.preventDefault();
         username = usernameInput.value;
         password = passwordInput.value;
-        login();
+        fetch("http://127.0.0.1:8000/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ username: username, password: password })
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+            var _a;
+            if (data.success) {
+                window.location.href = "../dashboard/dashboard.html";
+            }
+            else {
+                alert((_a = data.message) !== null && _a !== void 0 ? _a : "Invalid credentials");
+            }
+        })
+            .catch(function () {
+            alert("Network or server error");
+        });
         return [2 /*return*/];
     });
 }); });
-function login() {
-    window.location.href = "../dashboard/dashboard.html";
-}
