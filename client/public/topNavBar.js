@@ -1,11 +1,19 @@
-document.addEventListener("DOMContentLoaded", function () {
-    var navHTML = "\n    <h1 id=\"pageName\"></h1>\n    <nav class=\"topNavBar\">\n        <button class=\"topNavElement\">Share Records</button>\n        <button class=\"topNavElement\">Print</button>\n        <button class=\"topNavElement\">Edit Profile</button>\n    </nav>\n    ";
-    var navBar = document.getElementById('topNavContainer');
+"use strict";
+document.addEventListener("DOMContentLoaded", () => {
+    const navHTML = `
+    <h1 id="pageName"></h1>
+    <nav class="topNavBar">
+        <button class="topNavElement">Share Records</button>
+        <button class="topNavElement">Print</button>
+        <button class="topNavElement">Edit Profile</button>
+    </nav>
+    `;
+    const navBar = document.getElementById('topNavContainer');
     if (navBar) {
         navBar.innerHTML = navHTML;
     }
-    var currentPath = window.location.pathname;
-    var pageNameElement = document.getElementById('pageName');
+    const currentPath = window.location.pathname;
+    const pageNameElement = document.getElementById('pageName');
     if (pageNameElement) {
         if (currentPath.includes('/dashboard/')) {
             pageNameElement.textContent = 'Dashboard';

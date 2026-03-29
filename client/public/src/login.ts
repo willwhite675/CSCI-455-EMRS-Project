@@ -2,13 +2,13 @@ const form = document.getElementById("loginForm") as HTMLFormElement;
 const usernameInput = document.getElementById("username") as HTMLInputElement;
 const passwordInput = document.getElementById("password") as HTMLInputElement;
 
-form.addEventListener("submit", async (event) => {
+form.addEventListener("submit", (event) => {
     event.preventDefault();
 
     const username = usernameInput.value;
     const password = passwordInput.value;
 
-    fetch("http://127.0.0.1:8000/login", {
+    fetch("http://localhost:8001/login", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

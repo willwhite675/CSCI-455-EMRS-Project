@@ -10,7 +10,7 @@ load_dotenv()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000"],
+    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000", "https://willwhite675.github.io/CSCI-455-EMRS-Project"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,6 +28,7 @@ def get_connection():
         database=os.getenv("DB_NAME"),
         port=int(os.getenv("DB_PORT")),
     )
+loginUser = "SELECT authCredentials FROM user WHERE id = ?"
 
 @app.post("/login")
 async def login(data: Login):
@@ -39,7 +40,7 @@ async def login(data: Login):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT password FROM users WHERE username = ?",
+            loginUser,
             (data.username.strip(),)
         )
         row = cur.fetchone()
