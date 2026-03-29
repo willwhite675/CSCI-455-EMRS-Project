@@ -7,6 +7,18 @@ Basic web page for our EMRS project to allow interaction with a database
 * [Database Setup Using HeidiSQL](#database-setup-using-heidisql)
 * [Web Page Link](#web-page-link)
 
+## Backend
+The backend of this project is written in Python using FastAPI. To set up the backend,
+first create the Python virtual environment :
+1. Make sure Python is installed
+2. Navigate to `File` → `Project Structure`
+3. Under `Project Structure` navigate to `Platform Settings` → `SDKs`
+4. Click the `+` button and select `Add Python SDK from disk`
+5. Make sure `Virtualenv` is selected and click OK
+6. Run `.venv\Scripts\activate`
+7. Now install Fast API `pip install "fastapi[standard]"`
+8. Also install swaggerUI `pip install swagger-ui`
+
 ## Compilation
 The front end of this project uses HTML, CSS, and Typescript compiled into JavaScript. To compile the project after making
 changes, run the following command in the terminal from the project directory:
