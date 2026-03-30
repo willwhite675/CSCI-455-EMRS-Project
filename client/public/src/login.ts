@@ -1,19 +1,14 @@
-const form = document.getElementById("createAccountForm") as HTMLFormElement;
-const usernameInput = document.getElementById("username") as HTMLInputElement;
-const passwordInput = document.getElementById("password") as HTMLInputElement;
+const loginForm = document.getElementById("loginForm") as HTMLFormElement;
+const loginUsername = document.getElementById("username") as HTMLInputElement;
+const loginPassword = document.getElementById("password") as HTMLInputElement;
 const createAccountButton = document.getElementById("createAccountButton") as HTMLButtonElement;
 
-createAccountButton.addEventListener("click", () => {
-    window.location.href = "../create-account/create-account.html";
-});
-form.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    const username = usernameInput.value;
-    const password = passwordInput.value;
+function login(): void {
+    const username = loginUsername.value;
+    const password = loginPassword.value;
 
     fetch("http://localhost:8001/login", {
-        method: "POST",
+        method: "PUT",
         headers: {
             "Content-Type": "application/json"
         },
@@ -30,4 +25,18 @@ form.addEventListener("submit", (event) => {
         .catch(() => {
             alert("Network or server error");
         });
+}
+
+loginPassword.addEventListener("keydown", (event: KeyboardEvent) => {
+    if (event.key === "Enter") {
+        login()
+    }
+})
+createAccountButton.addEventListener("click", () => {
+    window.location.href = "../create-account/create-account.html";
+});
+loginForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    login()
+
 });

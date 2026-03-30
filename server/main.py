@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import mariadb
 import os
 from dotenv import load_dotenv
+from security import hash_password, verify_password
 
 app = FastAPI()
 load_dotenv()
@@ -28,7 +29,6 @@ def get_connection():
         database=os.getenv("DB_NAME"),
         port=int(os.getenv("DB_PORT")),
     )
-loginUser = "SELECT authCredentials FROM user WHERE id = ?"
 
 @app.post("/login")
 async def login(data: Login):
@@ -40,15 +40,15 @@ async def login(data: Login):
         cur = conn.cursor()
 
         cur.execute(
-            loginUser,
+            "SELECT authCredentials FROM user WHERE id = ?",
             (data.username.strip(),)
         )
         row = cur.fetchone()
 
-        if row and row[0] == data.password.strip():
+        if row and verify_password(data.password.strip(), row[0]):
             return {"success": True, "message": "Login successful"}
-
-        return {"success": False, "message": "Invalid credentials"}
+        else:
+            return {"success": False, "message": "Invalid credentials"}
 
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}
@@ -59,7 +59,7 @@ async def login(data: Login):
         if conn:
             conn.close()
 
-@app.post("/create-account")
+@app.put("/create-account")
 async def create_account(data: Login):
     conn = None
     cur = None
@@ -68,7 +68,22 @@ async def create_account(data: Login):
         conn = get_connection()
         cur = conn.cursor()
 
-        cur.execute()
+        hashed_password = hash_password(data.password.strip())
+
+        cur.execute(
+            "INSERT INTO User (ID, authCredentials) VALUES (?, ?)",
+            (data.username.strip(), hashed_password, False, "Patient")
+        )
+        conn.commit()
+
+        if cur.rowcount > 0:
+            return {"success": True, "message": "Account created successfully"}
+        else:
+            return {"success": False, "message": "Failed to create account"}
+
+    except Exception as e:
+        return {"success": False, "message": f"Server error: {str(e)}"}
+
     finally:
         if cur:
             cur.close()
