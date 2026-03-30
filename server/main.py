@@ -58,3 +58,19 @@ async def login(data: Login):
             cur.close()
         if conn:
             conn.close()
+
+@app.post("/create-account")
+async def create_account(data: Login):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute()
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()

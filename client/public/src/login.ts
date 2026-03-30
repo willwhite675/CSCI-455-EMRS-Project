@@ -1,7 +1,11 @@
-const form = document.getElementById("loginForm") as HTMLFormElement;
+const form = document.getElementById("createAccountForm") as HTMLFormElement;
 const usernameInput = document.getElementById("username") as HTMLInputElement;
 const passwordInput = document.getElementById("password") as HTMLInputElement;
+const createAccountButton = document.getElementById("createAccountButton") as HTMLButtonElement;
 
+createAccountButton.addEventListener("click", () => {
+    window.location.href = "../create-account/create-account.html";
+});
 form.addEventListener("submit", (event) => {
     event.preventDefault();
 

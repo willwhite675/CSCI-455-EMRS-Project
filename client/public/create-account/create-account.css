@@ -8,7 +8,7 @@ body{
     scale: 1.2;
     font-family: "Comic Sans MS", serif;
 
-    .loginContainer{
+    .createAccountContainer{
         display: flex;
         flex-direction: column;
         justify-content: center;

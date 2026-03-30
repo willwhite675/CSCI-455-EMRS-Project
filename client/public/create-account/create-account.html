@@ -1,35 +1,33 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
-    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="create-account.css">
     <title>Health Inc</title>
 </head>
 <body>
-<div class="loginContainer">
+<div class="createAccountContainer">
     <div class="logo">
         <span>Health Inc</span>
     </div>
-    <h1>Welcome to Health Inc</h1>
-    <div id="loginFormContainer">
+    <h1>Create an account below</h1>
+    <div id="createAccountContainer">
         <form id="createAccountForm">
             <label for="username" id="usernameLabel">Username</label>
             <input type="text" aria-label="username" id="username" autofocus required>
             <label for="password" id="passwordLabel">Password</label>
             <input type="text" aria-label="password" id="password" required>
-            <button type="submit" id="loginButton">Login</button>
             <button id="createAccountButton">Create Account</button>
         </form>
     </div>
 </div>
-<script src="login.js"></script>
+<script src="create-account.js"></script>
 <script src="../router.js"></script>
 <script>
     if (typeof Router !== 'undefined') {
         new Router('pageContent');
     }
 </script>
-
 </body>
 </html>

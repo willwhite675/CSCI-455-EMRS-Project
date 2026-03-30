@@ -1,7 +1,11 @@
 "use strict";
-const form = document.getElementById("loginForm");
+const form = document.getElementById("createAccountForm");
 const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
+const createAccountButton = document.getElementById("createAccountButton");
+createAccountButton.addEventListener("click", () => {
+    window.location.href = "../create-account/create-account.html";
+});
 form.addEventListener("submit", (event) => {
     event.preventDefault();
     const username = usernameInput.value;
