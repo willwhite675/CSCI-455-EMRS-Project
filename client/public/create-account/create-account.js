@@ -1,5 +1,5 @@
 "use strict";
-const createAccountForm = document.querySelector('.create-account-form');
+const createAccountForm = document.getElementById('createAccountForm');
 const createAccountUsername = document.getElementById("username");
 const createAccountPassword = document.getElementById("password");
 function createAccount() {

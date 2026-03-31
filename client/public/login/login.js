@@ -7,7 +7,7 @@ function login() {
     const username = loginUsername.value;
     const password = loginPassword.value;
     fetch("http://localhost:8001/login", {
-        method: "PUT",
+        method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
@@ -22,7 +22,8 @@ function login() {
             alert(data.message ?? "Invalid credentials");
         }
     })
-        .catch(() => {
+        .catch((e) => {
+        console.error(e);
         alert("Network or server error");
     });
 }

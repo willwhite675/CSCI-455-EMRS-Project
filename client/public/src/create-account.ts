@@ -1,4 +1,4 @@
-const createAccountForm = document.querySelector('.create-account-form');
+const createAccountForm = document.getElementById('createAccountForm');
 const createAccountUsername = document.getElementById("username") as HTMLInputElement;
 const createAccountPassword = document.getElementById("password") as HTMLInputElement;
 

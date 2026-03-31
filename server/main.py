@@ -59,7 +59,7 @@ async def login(data: Login):
         if conn:
             conn.close()
 
-@app.put("/create-account")
+@app.post("/create-account")
 async def create_account(data: Login):
     conn = None
     cur = None
@@ -71,7 +71,7 @@ async def create_account(data: Login):
         hashed_password = hash_password(data.password.strip())
 
         cur.execute(
-            "INSERT INTO User (ID, authCredentials) VALUES (?, ?)",
+            "INSERT INTO User (ID, authCredentials, twoFactorEnabled, userType) VALUES (?, ?, ?, ?)",
             (data.username.strip(), hashed_password, False, "Patient")
         )
         conn.commit()

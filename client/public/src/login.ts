@@ -8,7 +8,7 @@ function login(): void {
     const password = loginPassword.value;
 
     fetch("http://localhost:8001/login", {
-        method: "PUT",
+        method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
@@ -19,10 +19,11 @@ function login(): void {
             if (data.success) {
                 window.location.href = "../dashboard/dashboard.html";
             } else {
-                alert(data.message ?? "Invalid credentials");
+                alert(data.message ?? "Incorrect username or password");
             }
         })
-        .catch(() => {
+        .catch((e) => {
+            console.error(e);
             alert("Network or server error");
         });
 }
