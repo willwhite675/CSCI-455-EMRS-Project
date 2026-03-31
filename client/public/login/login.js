@@ -19,7 +19,7 @@ function login() {
             window.location.href = "../dashboard/dashboard.html";
         }
         else {
-            alert(data.message ?? "Invalid credentials");
+            alert(data.message ?? "Incorrect username or password");
         }
     })
         .catch((e) => {

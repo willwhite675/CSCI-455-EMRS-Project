@@ -1,0 +1,9 @@
+{
+  "compilerOptions":{
+    "outDir": "../client/public/management-panel",
+    "rootDir": "../client/public/src"
+  },
+  "include":[
+    "../client/public/src/management-panel.ts"
+  ]
+}

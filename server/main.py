@@ -9,9 +9,11 @@ from security import hash_password, verify_password
 app = FastAPI()
 load_dotenv()
 
+currentUser = "Guest"
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000", "https://willwhite675.github.io/CSCI-455-EMRS-Project"],
+    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000", "https://willwhite675.github.io"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +34,7 @@ def get_connection():
 
 @app.post("/login")
 async def login(data: Login):
+    global currentUser
     conn = None
     cur = None
 
@@ -46,6 +49,7 @@ async def login(data: Login):
         row = cur.fetchone()
 
         if row and verify_password(data.password.strip(), row[0]):
+            currentUser = data.username.strip()
             return {"success": True, "message": "Login successful"}
         else:
             return {"success": False, "message": "Invalid credentials"}
@@ -80,6 +84,42 @@ async def create_account(data: Login):
             return {"success": True, "message": "Account created successfully"}
         else:
             return {"success": False, "message": "Failed to create account"}
+
+    except Exception as e:
+        return {"success": False, "message": f"Server error: {str(e)}"}
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-current-user")
+async def get_current_user():
+    return os.getenv("currentUser", currentUser)
+
+@app.get("/is-admin")
+async def is_admin():
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            SELECT 1
+            FROM User u
+                     JOIN Administrator a ON u.ID = a.ID
+            WHERE u.ID = ?
+              AND u.userType = 'Provider'
+            """,
+            (currentUser,)
+        )
+
+        row = cur.fetchone()
+        return {"isAdmin": row is not None}
 
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}

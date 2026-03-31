@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="management-panel.css">
+    <title>Health Inc - Settings</title>
+</head>
+<body>
+<div id="topNavContainer"></div>
+<div id="pageContent">
+    <div id="sideNavContainer"></div>
+    <div class="container">
+
+    </div>
+</div>
+</body>
+<script src="../topNavBar.js"></script>
+<script src="../sideNavBar.js"></script>
+<script src="management-panel.js"></script>
+<script src="../router.js"></script>
+<script>
+    if (typeof Router !== 'undefined') {
+        new Router('pageContent');
+    }
+</script>
+
+</html>
