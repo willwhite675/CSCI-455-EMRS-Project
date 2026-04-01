@@ -1,4 +1,5 @@
 "use strict";
+// Simple SPA router to prevent page flashing
 class Router {
     contentContainer = null;
     constructor() {
@@ -10,8 +11,9 @@ class Router {
         document.addEventListener('click', (e) => {
             const target = e.target;
             const link = target.closest('a[href]');
+            // Don't intercept logout links
             if (link && link.id === 'logout') {
-                return;
+                return; // Allow normal navigation for logout
             }
             if (link && this.isInternalLink(link)) {
                 e.preventDefault();
@@ -28,12 +30,14 @@ class Router {
     }
     isInternalLink(link) {
         const href = link.getAttribute('href') || '';
+        // Check if it's a relative link and not login page
         return href.includes('.html') &&
             !href.includes('login.html') &&
             !link.href.startsWith('http://') &&
             !link.href.startsWith('https://');
     }
     async navigate(url) {
+        // Update browser history
         history.pushState({}, '', url);
         await this.loadPage(url, true);
     }
@@ -47,10 +51,13 @@ class Router {
             await new Promise(resolve => setTimeout(resolve, 200));
         }
         try {
+            // Fetch the new page
             const response = await fetch(url);
             const html = await response.text();
+            // Parse the HTML
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
+            // Extract the content from the container
             const newContent = doc.querySelector('.container');
             if (newContent && this.contentContainer) {
                 // Update content
@@ -63,10 +70,12 @@ class Router {
             if (newTitle) {
                 document.title = newTitle;
             }
+            // Load and execute the page-specific script
             await this.loadPageScript(url);
         }
         catch (error) {
             console.error('Navigation error:', error);
+            // Fallback to normal navigation
             window.location.href = url;
         }
     }
@@ -87,6 +96,7 @@ class Router {
         }
     }
 }
+// Initialize router when DOM is ready
 let router = null;
 function initRouter() {
     if (!router) {
