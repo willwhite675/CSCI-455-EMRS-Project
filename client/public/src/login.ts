@@ -12,11 +12,14 @@ function login(): void {
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password, })
     })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                //Keeping this in the session data isn't good security practice, but this is just for demonstration.
+                //In reality, you would create a token and then check the token
+                sessionStorage.setItem("isAdmin", String(data.isAdmin))
                 window.location.href = "../dashboard/dashboard.html";
             } else {
                 alert(data.message ?? "Incorrect username or password");

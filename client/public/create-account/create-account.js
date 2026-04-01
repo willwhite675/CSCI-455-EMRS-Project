@@ -2,6 +2,7 @@
 const createAccountForm = document.getElementById('createAccountForm');
 const createAccountUsername = document.getElementById("username");
 const createAccountPassword = document.getElementById("password");
+const backButton = document.getElementById("backButton");
 function createAccount() {
     const username = createAccountUsername.value;
     const password = createAccountPassword.value;
@@ -10,12 +11,12 @@ function createAccount() {
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password, userType: "Patient" })
     })
         .then(response => response.json())
         .then(data => {
         if (data.success) {
-            window.location.href = "../dashboard/dashboard.html";
+            window.location.href = "../login/login.html";
         }
         else {
             alert(data.message ?? "Invalid credentials");
@@ -30,3 +31,6 @@ if (createAccountForm)
         event.preventDefault();
         createAccount();
     });
+backButton.addEventListener("click", () => {
+    window.location.href = "../login/login.html";
+});

@@ -32,6 +32,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (currentPath.includes('/login/')) {
             pageNameElement.textContent = 'Login';
         }
+        else if (currentPath.includes('/management-panel/')) {
+            pageNameElement.textContent = 'Management Panel';
+        }
     }
 
 });

@@ -41,7 +41,7 @@ body{
                 width: 12rem;
             }
 
-            #loginButton, #createAccountButton{
+            #backButton, #createAccountButton{
                 box-sizing: content-box;
                 cursor: pointer;
                 background-color: transparent;
@@ -51,7 +51,7 @@ body{
                 width: 12rem;
                 height: 2rem;
             }
-            #loginButton:hover, #createAccountButton:hover{
+            #backButton:hover, #createAccountButton:hover{
                 background-color: black;
                 color: white;
             }

@@ -23,6 +23,11 @@ class Login(BaseModel):
     username: str
     password: str
 
+class CreateAccount(BaseModel):
+    username: str
+    password: str
+    userType: str
+
 def get_connection():
     return mariadb.connect(
         host=os.getenv("DB_HOST"),
@@ -50,7 +55,16 @@ async def login(data: Login):
 
         if row and verify_password(data.password.strip(), row[0]):
             currentUser = data.username.strip()
-            return {"success": True, "message": "Login successful"}
+
+            #Checks if user is an administrator
+            cur.execute(
+                "SELECT ID FROM administrator WHERE ID = ?",
+                (currentUser,)
+            )
+            admin_row = cur.fetchone()
+            is_admin = admin_row is not None
+
+            return {"success": True, "message": "Login successful", "isAdmin": is_admin}
         else:
             return {"success": False, "message": "Invalid credentials"}
 
@@ -63,10 +77,15 @@ async def login(data: Login):
         if conn:
             conn.close()
 
+@app.get("/get-current-user")
+async def get_current_user():
+    return {"user": currentUser}
+
 @app.post("/create-account")
-async def create_account(data: Login):
+async def create_account(data: CreateAccount):
     conn = None
     cur = None
+
 
     try:
         conn = get_connection()
@@ -75,8 +94,16 @@ async def create_account(data: Login):
         hashed_password = hash_password(data.password.strip())
 
         cur.execute(
-            "INSERT INTO User (ID, authCredentials, twoFactorEnabled, userType) VALUES (?, ?, ?, ?)",
-            (data.username.strip(), hashed_password, False, "Patient")
+            "SELECT ID FROM user WHERE ID = ?",
+            (data.username.strip(),)
+        )
+        user_row = cur.fetchone()
+        if user_row is not None:
+            return {"success": False, "message": "Username already exists"}
+
+        cur.execute(
+            "INSERT INTO user (ID, authCredentials, twoFactorEnabled, userType) VALUES (?, ?, ?, ?)",
+            (data.username.strip(), hashed_password, False, data.userType.strip())
         )
         conn.commit()
 
@@ -84,42 +111,6 @@ async def create_account(data: Login):
             return {"success": True, "message": "Account created successfully"}
         else:
             return {"success": False, "message": "Failed to create account"}
-
-    except Exception as e:
-        return {"success": False, "message": f"Server error: {str(e)}"}
-
-    finally:
-        if cur:
-            cur.close()
-        if conn:
-            conn.close()
-
-@app.get("/get-current-user")
-async def get_current_user():
-    return os.getenv("currentUser", currentUser)
-
-@app.get("/is-admin")
-async def is_admin():
-    conn = None
-    cur = None
-
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
-
-        cur.execute(
-            """
-            SELECT 1
-            FROM User u
-                     JOIN Administrator a ON u.ID = a.ID
-            WHERE u.ID = ?
-              AND u.userType = 'Provider'
-            """,
-            (currentUser,)
-        )
-
-        row = cur.fetchone()
-        return {"isAdmin": row is not None}
 
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}
