@@ -37,6 +37,45 @@ def get_connection():
         port=int(os.getenv("DB_PORT")),
     )
 
+@app.get("/get-current-user")
+async def get_current_user():
+    return {"user": currentUser}
+
+@app.get("/get-providers")
+async def get_providers():
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM healthcareprovider")
+        providers = cur.fetchall()
+
+        return {"providers": sorted([provider for provider in providers])}
+
+    except Exception as e:
+        return {"success": False, "message": f"Server error: {str(e)}"}
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-departments")
+async def get_departments():
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM department")
+        providers = cur.fetchall()
+
 @app.post("/login")
 async def login(data: Login):
     global currentUser
@@ -76,10 +115,6 @@ async def login(data: Login):
             cur.close()
         if conn:
             conn.close()
-
-@app.get("/get-current-user")
-async def get_current_user():
-    return {"user": currentUser}
 
 @app.post("/create-account")
 async def create_account(data: CreateAccount):
