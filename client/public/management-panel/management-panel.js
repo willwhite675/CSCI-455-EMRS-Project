@@ -10,16 +10,15 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(data => {
         const employeeTableBody = document.getElementById("employeeTableBody");
         if (employeeTableBody) {
-            for (let i = 0; i < data.providers.length; i++) {
-                console.log(data.providers[i]);
+            data.providers.forEach((provider) => {
                 employeeTableBody.innerHTML += `
                 <tr>
-                    <td>${data.providers[i][0]}</td>
-                    <td>${data.providers[i][1]}</td>
-                    <td>${data.providers[i][2]}</td>
+                    <td>${provider.ID}</td>
+                    <td>${provider.providerID}</td>
+                    <td>${provider.departmentName}</td>
                 </tr>
                 `;
-            }
+            });
         }
     })
         .catch(error => {

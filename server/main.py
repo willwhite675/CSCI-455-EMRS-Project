@@ -50,10 +50,27 @@ async def get_providers():
         conn = get_connection()
         cur = conn.cursor()
 
-        cur.execute("SELECT * FROM healthcareprovider")
+        cur.execute("""
+                    SELECT
+                        hp.ID,
+                        hp.providerID,
+                        hp.departmentID,
+                        d.departmentName
+                    FROM healthcareprovider hp
+                             LEFT JOIN department d ON hp.departmentID = d.departmentID
+                    """)
         providers = cur.fetchall()
+        provider_list = [
+            {
+                "ID": row[0],
+                "providerID": row[1],
+                "departmentID": row[2],
+                "departmentName": row[3]
+            }
+            for row in providers
+        ]
 
-        return {"providers": sorted([provider for provider in providers])}
+        return {"providers": sorted(provider_list, key=lambda x: x["ID"])}
 
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}
@@ -63,18 +80,6 @@ async def get_providers():
             cur.close()
         if conn:
             conn.close()
-
-@app.get("/get-departments")
-async def get_departments():
-    conn = None
-    cur = None
-
-    try:
-        conn = get_connection()
-        cur = conn.cursor()
-
-        cur.execute("SELECT * FROM department")
-        providers = cur.fetchall()
 
 @app.post("/login")
 async def login(data: Login):
