@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS emrs_database;
-USE emrs_database;
+CREATE DATABASE IF NOT EXISTS EMRS_spaceslide;
+USE EMRS_spaceslide;
 
 # ── Department (NEW) ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS Department
