@@ -9,6 +9,7 @@ function getProviders() {
                     <td>${provider.ID}</td>
                     <td>${provider.providerID}</td>
                     <td>${provider.departmentName}</td>
+                    <td>${provider.departmentID}</td>
                 </tr>
                 `
         })
@@ -34,3 +35,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 })
 
+const departmentList = document.getElementById("departmentList") as HTMLSelectElement;
+if (departmentList) {
+    theData.departments.forEach((department: any) => {
+        departmentList.innerHTML += `
+                <option value="${department.departmentID}">${department.departmentName}</option>
+                `
+    })
+}

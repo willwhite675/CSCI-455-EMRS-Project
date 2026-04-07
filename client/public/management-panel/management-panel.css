@@ -9,3 +9,11 @@ td {
     border: 1px solid rgb(160 160 160);
     padding: 8px 10px;
 }
+[popover]:hover {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    background-color: white;
+    border: 1px solid black;
+    padding: 1rem;
+}

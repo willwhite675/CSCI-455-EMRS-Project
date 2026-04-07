@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import mariadb
@@ -27,6 +27,11 @@ class CreateAccount(BaseModel):
     username: str
     password: str
     userType: str
+
+class AddProvider(BaseModel):
+    username: str
+    providerID: str
+    departmentID: str
 
 def get_connection():
     return mariadb.connect(
@@ -75,6 +80,28 @@ async def get_providers():
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}
 
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-departments")
+async def get_departments():
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT * FROM department")
+        departments = cur.fetchall()
+        department_list = [{"departmentID": row[0], "departmentName": row[1]} for row in departments]
+
+        return {"departments": sorted(department_list, key=lambda x: x["departmentID"])}
+    except Exception as e:
+        return {"success": False, "message": f"Server error: {str(e)}"}
     finally:
         if cur:
             cur.close()
@@ -139,7 +166,7 @@ async def create_account(data: CreateAccount):
         )
         user_row = cur.fetchone()
         if user_row is not None:
-            return {"success": False, "message": "Username already exists"}
+            raise HTTPException(status_code=400, detail="User already exists")
 
         cur.execute(
             "INSERT INTO user (ID, authCredentials, twoFactorEnabled, userType) VALUES (?, ?, ?, ?)",
@@ -154,6 +181,47 @@ async def create_account(data: CreateAccount):
 
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.post("/add-provider")
+async def add_provider(data: AddProvider):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        if data.username.strip() == "" or data.providerID.strip() == "" or data.departmentID.strip() == "":
+            raise HTTPException(status_code=400, detail="Username, Provider ID, and department ID cannot be empty")
+
+        if data.departmentID.strip() not in ["1", "2", "3", "4", "5"]:
+            raise HTTPException(status_code=400, detail="Invalid department ID")
+
+        cur.execute(
+            "SELECT ID FROM healthcareprovider WHERE ID = ?",
+            (data.username.strip(),)
+        )
+        provider_row = cur.fetchone()
+        if provider_row is not None:
+            raise HTTPException(status_code=400, detail="Employee already exists")
+
+        cur.execute(
+            "INSERT INTO healthcareprovider (ID, providerID, departmentID) VALUES (?, ?, ?)",
+            (data.username.strip(), data.providerID.strip(), data.departmentID.strip())
+        )
+
+        conn.commit()
+
+        if cur.rowcount > 0:
+            return {"success": True, "message": "Provider added successfully"}
+        else:
+            return {"success": False, "message": "Failed to add provider"}
 
     finally:
         if cur:
