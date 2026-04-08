@@ -212,6 +212,11 @@ async def add_provider(data: AddProvider):
             raise HTTPException(status_code=400, detail="Employee already exists")
 
         cur.execute(
+            "UPDATE user SET userType = 'Provider' WHERE ID = ?",
+            (data.employeeID.strip(),)
+        )
+
+        cur.execute(
             "INSERT INTO healthcareprovider (ID, providerID, departmentID) VALUES (?, ?, ?)",
             (data.employeeID.strip(), data.providerID.strip(), data.departmentID.strip())
         )
@@ -222,6 +227,41 @@ async def add_provider(data: AddProvider):
             return {"success": True, "message": "Provider added successfully"}
         else:
             return {"success": False, "message": "Failed to add provider"}
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+@app.post("/remove-provider")
+async def remove_provider(username: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT ID FROM healthcareprovider WHERE ID = ?",
+            (username.strip(),)
+        )
+        provider_row = cur.fetchone()
+        if provider_row is None:
+            raise HTTPException(status_code=404, detail="Provider not found")
+
+        cur.execute(
+        "DELETE FROM healthcareprovider WHERE ID = ?",
+            (username.strip(),)
+        )
+        cur.execute(
+        "UPDATE user SET userType = 'Patient' WHERE ID = ?",
+            (username.strip(),)
+        )
+
+        conn.commit()
+
+        return {"success": True, "message": "Provider removed successfully"}
 
     finally:
         if cur:
