@@ -97,7 +97,7 @@ ul {
     color: white;
 }
 
-button {
+.standardButton {
     display: block;
     color: black;
     text-decoration: none;
@@ -108,7 +108,7 @@ button {
     background-color: transparent;
 }
 
-button:hover {
+.standardButton:hover {
     background-color: black;
     color: white;
     cursor: pointer;

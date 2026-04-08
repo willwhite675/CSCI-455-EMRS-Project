@@ -29,7 +29,7 @@ class CreateAccount(BaseModel):
     userType: str
 
 class AddProvider(BaseModel):
-    username: str
+    employeeID: str
     providerID: str
     departmentID: str
 
@@ -99,7 +99,7 @@ async def get_departments():
         departments = cur.fetchall()
         department_list = [{"departmentID": row[0], "departmentName": row[1]} for row in departments]
 
-        return {"departments": sorted(department_list, key=lambda x: x["departmentID"])}
+        return {"departments": sorted(department_list, key=lambda x: x["departmentName"])}
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}
     finally:
@@ -197,7 +197,7 @@ async def add_provider(data: AddProvider):
         conn = get_connection()
         cur = conn.cursor()
 
-        if data.username.strip() == "" or data.providerID.strip() == "" or data.departmentID.strip() == "":
+        if data.employeeID.strip() == "" or data.providerID.strip() == "" or data.departmentID.strip() == "":
             raise HTTPException(status_code=400, detail="Username, Provider ID, and department ID cannot be empty")
 
         if data.departmentID.strip() not in ["1", "2", "3", "4", "5"]:
@@ -205,7 +205,7 @@ async def add_provider(data: AddProvider):
 
         cur.execute(
             "SELECT ID FROM healthcareprovider WHERE ID = ?",
-            (data.username.strip(),)
+            (data.employeeID.strip(),)
         )
         provider_row = cur.fetchone()
         if provider_row is not None:
@@ -213,7 +213,7 @@ async def add_provider(data: AddProvider):
 
         cur.execute(
             "INSERT INTO healthcareprovider (ID, providerID, departmentID) VALUES (?, ?, ?)",
-            (data.username.strip(), data.providerID.strip(), data.departmentID.strip())
+            (data.employeeID.strip(), data.providerID.strip(), data.departmentID.strip())
         )
 
         conn.commit()
