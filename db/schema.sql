@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS EMRS_spaceslide;
-USE EMRS_spaceslide;
+CREATE DATABASE IF NOT EXISTS EMRS_database;
+USE EMRS_database;
 
 # ── Department (NEW) ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS Department
@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS User
 (
     ID               VARCHAR(50) PRIMARY KEY,
     authCredentials  VARCHAR(255) NOT NULL,
+    firstName        VARCHAR(50) NOT NULL,
+    lastName         VARCHAR(50) NOT NULL,
+    email            VARCHAR(100) NOT NULL UNIQUE,
     twoFactorEnabled BOOLEAN DEFAULT FALSE,
     userType         VARCHAR(20)  NOT NULL
         CHECK (userType IN ('Patient', 'Provider'))

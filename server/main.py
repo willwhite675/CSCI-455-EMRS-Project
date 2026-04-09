@@ -26,6 +26,9 @@ class Login(BaseModel):
 class CreateAccount(BaseModel):
     username: str
     password: str
+    firstName: str
+    lastName: str
+    email: str
     userType: str
 
 class AddProvider(BaseModel):
@@ -172,8 +175,8 @@ async def create_account(data: CreateAccount):
             raise HTTPException(status_code=400, detail="User already exists")
 
         cur.execute(
-            "INSERT INTO user (ID, authCredentials, twoFactorEnabled, userType) VALUES (?, ?, ?, ?)",
-            (data.username.strip(), hashed_password, False, data.userType.strip())
+            "INSERT INTO user (ID, authCredentials, firstName, lastName, email, twoFactorEnabled, userType) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (data.username.strip(), hashed_password, data.firstName.strip(), data.lastName.strip(), data.email.strip(), False, data.userType.strip())
         )
         conn.commit()
 

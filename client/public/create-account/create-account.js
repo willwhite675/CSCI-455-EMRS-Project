@@ -2,16 +2,22 @@
 const createAccountForm = document.getElementById('createAccountForm');
 const createAccountUsername = document.getElementById("username");
 const createAccountPassword = document.getElementById("password");
+const createAccountFirstName = document.getElementById("firstName");
+const createAccountLastName = document.getElementById("lastName");
+const createAccountEmail = document.getElementById("email");
 const backButton = document.getElementById("backButton");
 function createAccount() {
     const username = createAccountUsername.value;
     const password = createAccountPassword.value;
+    const firstName = createAccountFirstName.value;
+    const lastName = createAccountLastName.value;
+    const email = createAccountEmail.value;
     fetch("http://localhost:8001/create-account", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ username, password, userType: "Patient" })
+        body: JSON.stringify({ username, password, firstName, lastName, email, userType: "Patient" })
     })
         .then(response => response.json())
         .then(data => {
