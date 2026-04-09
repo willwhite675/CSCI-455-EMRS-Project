@@ -33,6 +33,9 @@ class AddProvider(BaseModel):
     providerID: str
     departmentID: str
 
+class RemoveProvider(BaseModel):
+    username: str
+
 def get_connection():
     return mariadb.connect(
         host=os.getenv("DB_HOST"),
@@ -234,7 +237,7 @@ async def add_provider(data: AddProvider):
         if conn:
             conn.close()
 @app.post("/remove-provider")
-async def remove_provider(username: str):
+async def remove_provider(data: RemoveProvider):
     conn = None
     cur = None
 
@@ -244,7 +247,7 @@ async def remove_provider(username: str):
 
         cur.execute(
             "SELECT ID FROM healthcareprovider WHERE ID = ?",
-            (username.strip(),)
+            (data.username.strip(),)
         )
         provider_row = cur.fetchone()
         if provider_row is None:
@@ -252,11 +255,11 @@ async def remove_provider(username: str):
 
         cur.execute(
         "DELETE FROM healthcareprovider WHERE ID = ?",
-            (username.strip(),)
+            (data.username.strip(),)
         )
         cur.execute(
         "UPDATE user SET userType = 'Patient' WHERE ID = ?",
-            (username.strip(),)
+            (data.username.strip(),)
         )
 
         conn.commit()

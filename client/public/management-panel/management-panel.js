@@ -1,5 +1,6 @@
 "use strict";
 let theData;
+let dataTable = null;
 const addEmployeeID = document.getElementById("ID");
 const addEmployeeProviderID = document.getElementById("providerID");
 const addEmployeeDepartmentSelect = document.getElementById("departmentList");
@@ -15,10 +16,12 @@ function getProviders() {
                     <td>${provider.providerID}</td>
                     <td>${provider.departmentName}</td>
                     <td>${provider.departmentID}</td>
-                    <td><button class="removeButton">Remove</button></td>
+                    <td class="remove-column"><button class="removeButton">Remove</button></td>
                 </tr>
                 `;
         });
+        dataTable = $('#employeeTable').DataTable();
+        attachRemoveButtonListeners();
     }
 }
 function populateDepartments() {
@@ -47,7 +50,7 @@ function addEmployee() {
             .then(data => {
             if (data.success) {
                 addEmployeeDialog.close();
-                getProviders();
+                location.reload();
             }
             else {
                 alert(data.message ?? "Failed to add employee");
@@ -57,6 +60,39 @@ function addEmployee() {
             console.error("Error adding employee:", error);
         });
     }
+}
+function attachRemoveButtonListeners() {
+    const removeButtons = document.querySelectorAll('.removeButton');
+    removeButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            const employeeID = row?.querySelector('td:first-child')?.textContent;
+            if (employeeID && confirm(`Are you sure you want to remove employee ${employeeID}?`)) {
+                removeEmployee(employeeID);
+            }
+        });
+    });
+}
+function removeEmployee(username) {
+    fetch("http://localhost:8001/remove-provider", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username }),
+    })
+        .then(response => response.json())
+        .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+        else {
+            alert(data.message ?? "Failed to remove employee");
+        }
+    })
+        .catch(error => {
+        console.error("Error removing employee:", error);
+    });
 }
 if (addEmployeeButton && addEmployeeDialog) {
     addEmployeeButton.addEventListener('click', () => {

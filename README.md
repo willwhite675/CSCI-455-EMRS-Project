@@ -2,6 +2,8 @@
 Basic web page for our EMRS project to allow interaction with a database
 
 <!-- TOC -->
+## Table of Contents
+* [Backend](#backend)
 * [Compilation](#compilation)
 * [Installing MariaDB](#installing-mariadb)
 * [Database Setup Using HeidiSQL](#database-setup-using-heidisql)

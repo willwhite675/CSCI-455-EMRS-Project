@@ -63,3 +63,6 @@ td {
     background-color: darkred;
     cursor: pointer;
 }
+.remove-column{
+    text-align: center;
+}

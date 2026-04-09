@@ -4,11 +4,13 @@
     "db:setup": "node -e \"console.log('Run the SQL file in db/schema.sql on your local MariaDB instance')\""
   },
   "dependencies": {
+    "datatables": "^1.10.18",
     "dotenv": "^17.3.1",
     "mariadb": "^3.5.2",
     "swagger-ui": "^5.32.1"
   },
   "devDependencies": {
+    "@types/jquery": "^4.0.0",
     "@types/node": "^25.5.0",
     "typescript": "^6.0.2"
   }

@@ -1,6 +1,6 @@
 USE emrs_database;
 
-#Adding test data to user table
+#Adding test data to user table but none of these passwords actually work, just filler text
 INSERT INTO User (ID, authCredentials, twoFactorEnabled, userType) VALUES ('Luke Skywalker', '$2b$12$K1H7Xp7v8Y6r9Q2w3E4r5u9I8o7p6a5s4d3f2g1h0j9k8l7m6n5o4', TRUE, 'Patient');
 INSERT INTO User (ID, authCredentials, twoFactorEnabled, userType) VALUES ('Leia Organa', '$2b$12$L2I8Yq8w9Z7s0R3x4F5s6v0J9p8q7b6t5e4g3h1i0k9l8m7n6o5p', FALSE, 'Patient');
 INSERT INTO User (ID, authCredentials, twoFactorEnabled, userType) VALUES ('Han Solo', '$2b$12$M3J9Zr9x0A8t1S4y5G6t7w1K0q9r8c7u6f5h4i2j1l0m9n8o7p6q', FALSE, 'Patient');
