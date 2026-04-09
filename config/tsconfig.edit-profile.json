@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../client/public/edit-profile",
+    "rootDir": "../client/public/src"
+  },
+  "include": [
+    "../client/public/src/edit-profile.ts"
+  ]
+}
