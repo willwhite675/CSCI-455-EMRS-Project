@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS Patient
     medicalHistory   TEXT,
     allergyProfile   TEXT,
     insuranceDetails VARCHAR(255),
+    lastVisit        DATE,
     FOREIGN KEY (ID) REFERENCES User (ID)
         ON DELETE CASCADE
 );

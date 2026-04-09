@@ -85,3 +85,31 @@ INSERT INTO HealthcareProvider (ID, providerID, departmentID) VALUES ('red_mulch
 INSERT INTO HealthcareProvider (ID, providerID, departmentID) VALUES ('oak_shredder', 'PROV-MULCH-003', 3);
 INSERT INTO HealthcareProvider (ID, providerID, departmentID) VALUES ('compost_pro', 'PROV-MULCH-004', 5);
 INSERT INTO HealthcareProvider (ID, providerID, departmentID) VALUES ('gravel_path', 'PROV-MULCH-005', 1);
+
+#Adding patients into the patient table
+-- Theme: Star Wars
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('l_skywalker', 'Hand replacement surgery; history of Force-exhaustion.', 'None', 'Rebel Alliance Health', '2026-01-15');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('princess_leia', 'High stress levels; history of vacuum exposure.', 'None', 'Alderaan Royal Care', '2025-12-10');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('scruffy_nerfherder', 'Multiple blunt force traumas; frozen in carbonite.', 'Carbonite residue', 'Smugglers Union', '2026-03-22');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('walking_carpet', 'Lower back pain from carrying protocol droids.', 'Grooming chemicals', 'Kashyyyk Life', '2026-02-14');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('gold_droid', 'Frequent memory wipes; joint stiffness.', 'Magnetic pulses', 'Tatooine Tech Insurance', '2025-11-30');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('bee_b127', 'Damaged vocal processor; frequent paint touch-ups.', 'Rust-proofing agents', 'Cybertronian Shield', '2026-04-01');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('cliff_j', 'Aggressive driving injuries; history of jumping.', 'Poor quality Energon', 'Autobot Defense Plan', '2026-01-05');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('king_grimlock', 'Dental wear on metal teeth; fire-breath irritation.', 'Small logic circuits', 'Dinobot Primitive', '2026-02-28');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('arcee_pink', 'Combat-related chassis dents.', 'Latex-based lubricants', 'Cybertron Elite Care', '2025-05-12');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('hot_rod_01', 'Premature leadership stress.', 'Inert gas', 'Matrix Protection', '2026-03-10');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('mondays_suck', 'Chronic obesity; extreme lethargy; lasagna addiction.', 'Mondays, Raisins', 'Arbuckle Household', '2026-04-07');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('bark_bark_odie', 'Excessive drooling; history of being kicked off tables.', 'None', 'Arbuckle Household', '2026-04-06');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('abu_dhabi_bound', 'Minor injuries from being mailed in boxes.', 'Packing peanuts', 'Cutest Cat Premium', '2025-08-19');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('pooky_bear', 'Losing stuffing; needs occasional stitching.', 'Dryer lint', 'N/A', '2026-01-01');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('arlene_gap', 'Dental checkups for gap alignment.', 'Cheap cat food', 'City Feline Med', '2026-02-15');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('kai_fire', 'Occasional smoke inhalation; singed eyebrows.', 'Water-based attacks', 'Elemental Alliance', '2026-03-25');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('lightning_jay', 'Frequent electrical shocks; anxiety.', 'Rubber boots', 'Walker Salvage Plan', '2026-01-20');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('ice_zane', 'Coolant leaks; processor overheating.', 'Extreme heat', 'Dr. Julien Care', '2026-03-30');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('cake_cole', 'Stomach aches from excessive cake consumption.', 'Low-carb diets', 'Brookstone Family', '2025-11-12');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('green_ninja_01', 'Identity crisis; golden power fatigue.', 'Darkness', 'Destiny’s Bounty Med', '2026-04-02');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('cedar_king', 'Brittleness; fading color due to UV.', 'Wood-boring beetles', 'Lawn & Garden Gold', '2026-04-05');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('bark_life', 'Moisture loss; flaking.', 'Termites', 'Arbor Health', '2026-02-10');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('bouncy_bits', 'No natural decay; high impact resistance.', 'High temperatures', 'Playground Safe Care', '2026-03-15');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('dark_mulch', 'Dye bleeding; sun bleaching.', 'Rainwater acidity', 'Designer Landscape', '2026-01-28');
+INSERT INTO Patient (ID, medicalHistory, allergyProfile, insuranceDetails, lastVisit) VALUES ('straw_man', 'Rapid decomposition; highly flammable.', 'Fire, Dampness', 'Farmhand Insurance', '2026-04-08');

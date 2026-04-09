@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="patients.css">
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.7/css/dataTables.dataTables.css" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/2.3.7/js/dataTables.js"></script>
+
     <title>Health Inc - Patients</title>
 </head>
 <body>
@@ -13,7 +18,19 @@
     <div id="sideNavContainer"></div>
     <div class="container">
         <table id="patientsTable">
+            <thead id="patientTableHeader">
+                <tr id="patientTableLabels">
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Allergies</th>
+                    <th>Insurance</th>
+                    <th>Last Visit</th>
+                </tr>
+            </thead>
+            <tbody id="patientTableBody">
 
+            </tbody>
         </table>
     </div>
 </div>

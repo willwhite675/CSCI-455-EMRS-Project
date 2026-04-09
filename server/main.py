@@ -64,24 +64,76 @@ async def get_providers():
         cur.execute("""
                     SELECT
                         hp.ID,
+                        u.firstName,
+                        u.lastName,
+                        u.email,
                         hp.providerID,
                         hp.departmentID,
                         d.departmentName
                     FROM healthcareprovider hp
-                             LEFT JOIN department d ON hp.departmentID = d.departmentID
+                        LEFT JOIN user u ON hp.ID = u.ID
+                        LEFT JOIN department d ON hp.departmentID = d.departmentID
                     """)
         providers = cur.fetchall()
         provider_list = [
             {
                 "ID": row[0],
-                "providerID": row[1],
-                "departmentID": row[2],
-                "departmentName": row[3]
+                "firstName": row[1],
+                "lastName": row[2],
+                "email": row[3],
+                "providerID": row[4],
+                "departmentID": row[5],
+                "departmentName": row[6]
             }
             for row in providers
         ]
 
-        return {"providers": sorted(provider_list, key=lambda x: x["ID"])}
+        return {"providers": sorted(provider_list, key=lambda x: x["firstName"])}
+
+    except Exception as e:
+        return {"success": False, "message": f"Server error: {str(e)}"}
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patients")
+async def get_patients():
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT
+                        p.ID,
+                        u.firstName,
+                        u.lastName,
+                        u.email,
+                        p.allergyProfile,
+                        p.insuranceDetails,
+                        p.lastVisit
+                    FROM patient p
+                             LEFT JOIN user u ON p.ID = u.ID
+                    """)
+        patients = cur.fetchall()
+        patient_list = [
+            {
+                "ID": row[0],
+                "firstName": row[1],
+                "lastName": row[2],
+                "email": row[3],
+                "allergyProfile": row[4],
+                "insuranceDetails": row[5],
+                "lastVisit": row[6]
+            }
+            for row in patients]
+
+        return {"patients": sorted(patient_list, key=lambda x: x["firstName"])}
 
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}

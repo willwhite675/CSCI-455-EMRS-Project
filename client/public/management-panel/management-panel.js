@@ -1,6 +1,6 @@
 "use strict";
-let theData;
-let dataTable = null;
+let providerData;
+let providerDataTable = null;
 const addEmployeeID = document.getElementById("ID");
 const addEmployeeProviderID = document.getElementById("providerID");
 const addEmployeeDepartmentSelect = document.getElementById("departmentList");
@@ -9,10 +9,11 @@ const addEmployeeDialog = document.getElementById('addEmployeeDialog');
 function getProviders() {
     const employeeTableBody = document.getElementById("employeeTableBody");
     if (employeeTableBody) {
-        theData.providers.forEach((provider) => {
+        providerData.providers.forEach((provider) => {
             employeeTableBody.innerHTML += `
                 <tr>
                     <td>${provider.ID}</td>
+                    <td>${provider.lastName}, ${provider.firstName}</td>
                     <td>${provider.providerID}</td>
                     <td>${provider.departmentName}</td>
                     <td>${provider.departmentID}</td>
@@ -20,18 +21,8 @@ function getProviders() {
                 </tr>
                 `;
         });
-        dataTable = $('#employeeTable').DataTable();
+        providerDataTable = $('#employeeTable').DataTable();
         attachRemoveButtonListeners();
-    }
-}
-function populateDepartments() {
-    const departmentList = document.getElementById("departmentList");
-    if (departmentList && theData.departments) {
-        theData.departments.forEach((department) => {
-            departmentList.innerHTML += `
-                <option value="${department.departmentID}">${department.departmentName}</option>
-                `;
-        });
     }
 }
 function addEmployee() {
@@ -67,7 +58,8 @@ function attachRemoveButtonListeners() {
         button.addEventListener('click', (e) => {
             const row = e.target.closest('tr');
             const employeeID = row?.querySelector('td:first-child')?.textContent;
-            if (employeeID && confirm(`Are you sure you want to remove employee ${employeeID}?`)) {
+            const name = row?.querySelector('td:nth-child(2)')?.textContent;
+            if (employeeID && confirm(`Are you sure you want to remove ${name}?`)) {
                 removeEmployee(employeeID);
             }
         });
@@ -117,24 +109,10 @@ document.addEventListener("DOMContentLoaded", () => {
     })
         .then(response => response.json())
         .then(data => {
-        theData = data;
+        providerData = data;
         getProviders();
     })
         .catch(error => {
         console.error("Error fetching providers:", error);
-    });
-    fetch("http://localhost:8001/get-departments", {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
-    })
-        .then(response => response.json())
-        .then(data => {
-        theData = { ...theData, ...data };
-        populateDepartments();
-    })
-        .catch(error => {
-        console.error("Error fetching departments:", error);
     });
 });

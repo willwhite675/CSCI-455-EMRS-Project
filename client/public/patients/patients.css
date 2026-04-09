@@ -1,0 +1,8 @@
+.dataRows:hover {
+    background-color: #cccaca;
+    cursor: pointer;
+}
+
+.dataRows {
+    transition: background-color 0.3s ease;
+}
