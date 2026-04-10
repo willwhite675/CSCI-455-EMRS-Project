@@ -15,15 +15,24 @@
     <div id="createAccountContainer">
         <form id="createAccountForm">
             <label for="username" id="usernameLabel">Username</label>
-            <input type="text" aria-label="username" id="username" autofocus required>
+            <input class="inputField" type="text" aria-label="username" id="username" autofocus required>
             <label for="password" id="passwordLabel">Password</label>
-            <input type="password" aria-label="password" id="password" required>
+            <input class="inputField" type="password" aria-label="password" id="password" required>
             <label for="firstName" id="firstNameLabel">First Name</label>
-            <input type="text" aria-label="firstName" id="firstName" required>
+            <input class="inputField" type="text" aria-label="firstName" id="firstName" required>
             <label for="lastName" id="lastNameLabel">Last Name</label>
-            <input type="text" aria-label="lastName" id="lastName" required>
+            <input class="inputField" type="text" aria-label="lastName" id="lastName" required>
+            <label for="phoneNumber" id="phoneLabel">Phone Number</label>
+            <input class="inputField" type="tel" aria-label="phone number" id="phoneNumber" required>
+            <label for="age" id="ageLabel">Age</label>
+            <input class="inputField" type="number" aria-label="age" id="age" required>
+            <label for="gender" id="genderLabel">Gender</label>
+            <select id="gender" name="gender" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
             <label for="email" id="emailLabel">Email</label>
-            <input type="email" aria-label="email" id="email" required>
+            <input class="inputField" type="email" aria-label="email" id="email" required>
             <button type="submit" id="createAccountButton">Create Account</button>
             <button id="backButton">Back</button>
         </form>

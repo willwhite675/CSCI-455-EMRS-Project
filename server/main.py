@@ -28,6 +28,9 @@ class CreateAccount(BaseModel):
     password: str
     firstName: str
     lastName: str
+    phoneNumber: str
+    age: int
+    gender: str
     email: str
     userType: str
 
@@ -35,6 +38,9 @@ class AddProvider(BaseModel):
     employeeID: str
     providerID: str
     departmentID: str
+
+class AddPatient(BaseModel):
+    username: str
 
 class RemoveProvider(BaseModel):
     username: str
@@ -227,8 +233,8 @@ async def create_account(data: CreateAccount):
             raise HTTPException(status_code=400, detail="User already exists")
 
         cur.execute(
-            "INSERT INTO user (ID, authCredentials, firstName, lastName, email, twoFactorEnabled, userType) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (data.username.strip(), hashed_password, data.firstName.strip(), data.lastName.strip(), data.email.strip(), False, data.userType.strip())
+            "INSERT INTO user (ID, authCredentials, firstName, lastName, phonenumber, age, gender, email, twoFactorEnabled, userType) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (data.username.strip(), hashed_password, data.firstName.strip(), data.lastName.strip(), data.phoneNumber.strip(), data.age, data.gender.strip(), data.email.strip(), False, data.userType.strip())
         )
         conn.commit()
 
@@ -291,6 +297,37 @@ async def add_provider(data: AddProvider):
             cur.close()
         if conn:
             conn.close()
+
+@app.post("/add-patient")
+async def add_patient(data: AddPatient):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "INSERT INTO patient (ID) VALUES (?)",
+            (data.username.strip())
+        )
+        cur.execute(
+            "UPDATE user SET userType = 'Patient' WHERE ID = ?",
+        )
+
+        conn.commit()
+
+        if cur.rowcount > 0:
+            return {"success": True, "message": "Patient added successfully"}
+        else:
+            return {"success": False, "message": "Failed to add patient"}
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 @app.post("/remove-provider")
 async def remove_provider(data: RemoveProvider):
     conn = None

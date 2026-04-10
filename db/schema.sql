@@ -13,12 +13,15 @@ CREATE TABLE IF NOT EXISTS User
 (
     ID               VARCHAR(50) PRIMARY KEY,
     authCredentials  VARCHAR(255) NOT NULL,
-    firstName        VARCHAR(50) NOT NULL,
-    lastName         VARCHAR(50) NOT NULL,
+    firstName        VARCHAR(50)  NOT NULL,
+    lastName         VARCHAR(50)  NOT NULL,
+    phoneNumber      VARCHAR(20)  NOT NULL,
+    age              INT          NOT NULL,
+    gender           VARCHAR(10)  NOT NULL,
     email            VARCHAR(100) NOT NULL UNIQUE,
-    twoFactorEnabled BOOLEAN DEFAULT FALSE,
+    twoFactorEnabled BOOLEAN      Not NULL DEFAULT FALSE,
     userType         VARCHAR(20)  NOT NULL
-        CHECK (userType IN ('Patient', 'Provider'))
+        CHECK (userType IN ('Patient', 'Provider', 'Guest'))
 );
 
 CREATE TABLE IF NOT EXISTS Patient

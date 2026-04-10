@@ -94,6 +94,24 @@ function removeEmployee(username: string) {
             console.error("Error removing employee:", error);
         });
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    fetch("http://localhost:8001/get-providers", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+            providerData = data
+            getProviders()
+        })
+        .catch(error => {
+            console.error("Error fetching providers:", error);
+        });
+})
+
 if (addEmployeeButton && addEmployeeDialog) {
     addEmployeeButton.addEventListener('click', () => {
         addEmployeeDialog.showModal();
@@ -110,21 +128,4 @@ addEmployeeForm?.addEventListener('submit', (e: Event) => {
 const closeEmployeeForm = document.getElementById(("closeAddEmployeeDialogButton")) as HTMLButtonElement;
 closeEmployeeForm?.addEventListener('click', () => {
     addEmployeeDialog.close();
-})
-
-document.addEventListener("DOMContentLoaded", () => {
-    fetch("http://localhost:8001/get-providers", {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json"
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-         providerData = data
-        getProviders()
-    })
-    .catch(error => {
-        console.error("Error fetching providers:", error);
-    });
 })

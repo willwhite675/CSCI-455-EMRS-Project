@@ -86,20 +86,6 @@ function removeEmployee(username) {
         console.error("Error removing employee:", error);
     });
 }
-if (addEmployeeButton && addEmployeeDialog) {
-    addEmployeeButton.addEventListener('click', () => {
-        addEmployeeDialog.showModal();
-    });
-}
-const addEmployeeForm = document.getElementById('addEmployeeForm');
-addEmployeeForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    addEmployee();
-});
-const closeEmployeeForm = document.getElementById(("closeAddEmployeeDialogButton"));
-closeEmployeeForm?.addEventListener('click', () => {
-    addEmployeeDialog.close();
-});
 document.addEventListener("DOMContentLoaded", () => {
     fetch("http://localhost:8001/get-providers", {
         method: "GET",
@@ -115,4 +101,18 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch(error => {
         console.error("Error fetching providers:", error);
     });
+});
+if (addEmployeeButton && addEmployeeDialog) {
+    addEmployeeButton.addEventListener('click', () => {
+        addEmployeeDialog.showModal();
+    });
+}
+const addEmployeeForm = document.getElementById('addEmployeeForm');
+addEmployeeForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    addEmployee();
+});
+const closeEmployeeForm = document.getElementById(("closeAddEmployeeDialogButton"));
+closeEmployeeForm?.addEventListener('click', () => {
+    addEmployeeDialog.close();
 });
