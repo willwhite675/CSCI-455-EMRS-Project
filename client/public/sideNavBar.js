@@ -1,7 +1,20 @@
 "use strict";
 document.addEventListener("DOMContentLoaded", () => {
-    const isAdmin = sessionStorage.getItem("isAdmin") === "true";
+    const userType = sessionStorage.getItem("userType");
     let navHTML = `
+        <nav class="sideNavBar">
+      <ul>
+        <a href="../dashboard/dashboard.html" class="sideNavLink">Dashboard</a>
+        <a href="../appointments/appointments.html" class="sideNavLink">Appointments</a>
+        <a href="../lab-results/lab-results.html" class="sideNavLink">Lab Results</a>
+        <a href="../billing/billing.html" class="sideNavLink">Billing</a>
+        <a href="../settings/settings.html" class="sideNavLink">Settings</a>
+      </ul>
+        <a href="../login/login.html" class="sideNavLink" id="logout">Logout</a>
+    </nav>
+    `;
+    if (userType === "Provider") {
+        navHTML = `
         <nav class="sideNavBar">
       <ul>
         <a href="../dashboard/dashboard.html" class="sideNavLink">Dashboard</a>
@@ -14,7 +27,9 @@ document.addEventListener("DOMContentLoaded", () => {
         <a href="../login/login.html" class="sideNavLink" id="logout">Logout</a>
     </nav>
     `;
-    if (isAdmin) {
+    }
+    // Admin gets all links including management panel and patients
+    if (userType === "Admin") {
         navHTML = `
         <nav class="sideNavBar">
       <ul>

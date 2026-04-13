@@ -25,7 +25,7 @@ function createAccount() {
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({ username, password, firstName, lastName, phoneNumber, age, gender, email, userType: "Guest" })
+        body: JSON.stringify({ username, password, firstName, lastName, phoneNumber, age, gender, email, userType: "Patient" })
     })
     .then(response => response.json())
     .then(data => {

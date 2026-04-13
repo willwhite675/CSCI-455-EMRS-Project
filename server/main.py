@@ -1,15 +1,16 @@
-from fastapi import FastAPI, HTTPException
+from typing import Annotated, List
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import mariadb
 import os
 from dotenv import load_dotenv
 from security import hash_password, verify_password
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 app = FastAPI()
 load_dotenv()
-
-currentUser = "Guest"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,9 +20,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+async def get_current_active_user(
+        current_user: Annotated[User, Depends(get_current_user)],
+):
+    if current_user.disabled:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+class RoleChecker:
+    def __init__(self, allowed_roles: List[str]):
+        self.allowed_roles = allowed_roles
+
+    def __call__(self, user: User = Depends(get_current_active_user)):
+        # Check if the user's role is in the allowed list
+        if user.userType not in self.allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Operation not permitted"
+            )
+
 class Login(BaseModel):
     username: str
     password: str
+
+class User(BaseModel):
+    username: str
+    email: str | None = None
+    firstName: str | None = None
+    lastName: str | None = None
+    disabled: bool | None = None
+    userType: str | None = None
+
+class UserInDB(User):
+    hashed_password: str
 
 class CreateAccount(BaseModel):
     username: str
@@ -54,11 +85,54 @@ def get_connection():
         port=int(os.getenv("DB_PORT")),
     )
 
-@app.get("/get-current-user")
-async def get_current_user():
-    return {"user": currentUser}
+def get_user_from_db(username: str):
+    # Fetch user from database
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
 
-@app.get("/get-providers")
+        cur.execute(
+            "SELECT ID, authCredentials, firstName, lastName, email, userType FROM user WHERE ID = ?",
+            (username.strip(),)
+        )
+        row = cur.fetchone()
+
+        if row:
+            return UserInDB(
+                username=row[0],
+                hashed_password=row[1],
+                firstName=row[2],
+                lastName=row[3],
+                email=row[4],
+                userType=row[5],
+                disabled=False
+            )
+        return None
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+def decode_token(token):
+    # This doesn't provide any security at all, but for this project we don't need
+    # full JWT validation
+    user = get_user_from_db(token)
+    return user
+
+async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    user = decode_token(token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+
+@app.get("/get-providers", dependencies=[Depends(RoleChecker(["Admin"]))])
 async def get_providers():
     conn = None
     cur = None
@@ -105,7 +179,7 @@ async def get_providers():
         if conn:
             conn.close()
 
-@app.get("/get-patients")
+@app.get("/get-patients", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
 async def get_patients():
     conn = None
     cur = None
@@ -150,7 +224,7 @@ async def get_patients():
         if conn:
             conn.close()
 
-@app.get("/get-departments")
+@app.get("/get-departments", dependencies=[Depends(RoleChecker(["Admin"]))])
 async def get_departments():
     conn = None
     cur = None
@@ -172,9 +246,16 @@ async def get_departments():
         if conn:
             conn.close()
 
-@app.post("/login")
-async def login(data: Login):
-    global currentUser
+@app.get("/users/me")
+async def read_users_me(
+        current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    # Get current user
+    return current_user
+
+@app.post("/token")
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    # OAuth2 token login endpoint
     conn = None
     cur = None
 
@@ -183,29 +264,48 @@ async def login(data: Login):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT authCredentials FROM user WHERE id = ?",
-            (data.username.strip(),)
+            "SELECT authCredentials, userType FROM user WHERE id = ?",
+            (form_data.username.strip(),)
         )
         row = cur.fetchone()
 
-        if row and verify_password(data.password.strip(), row[0]):
-            currentUser = data.username.strip()
-
-            #Checks if user is an administrator
-            cur.execute(
-                "SELECT ID FROM administrator WHERE ID = ?",
-                (currentUser,)
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
             )
-            admin_row = cur.fetchone()
-            is_admin = admin_row is not None
 
-            return {"success": True, "message": "Login successful", "isAdmin": is_admin}
-        else:
-            return {"success": False, "message": "Invalid credentials"}
+        if not verify_password(form_data.password.strip(), row[0]):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
+        # Check if user is an administrator
+        cur.execute(
+            "SELECT ID FROM administrator WHERE ID = ?",
+            (form_data.username.strip(),)
+        )
+        admin_row = cur.fetchone()
+        is_admin = admin_row is not None
+
+        # For now, using username as token
+        return {
+            "access_token": form_data.username.strip(),
+            "token_type": "bearer",
+            "user_type": row[1],
+            "is_admin": is_admin
+        }
+
+    except HTTPException:
+        raise
     except Exception as e:
-        return {"success": False, "message": f"Server error: {str(e)}"}
-
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
     finally:
         if cur:
             cur.close()
@@ -252,7 +352,7 @@ async def create_account(data: CreateAccount):
         if conn:
             conn.close()
 
-@app.post("/add-provider")
+@app.post("/add-provider", dependencies=[Depends(RoleChecker(["Admin"]))])
 async def add_provider(data: AddProvider):
     conn = None
     cur = None
@@ -298,7 +398,7 @@ async def add_provider(data: AddProvider):
         if conn:
             conn.close()
 
-@app.post("/add-patient")
+@app.post("/add-patient", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
 async def add_patient(data: AddPatient):
     conn = None
     cur = None
@@ -328,7 +428,7 @@ async def add_patient(data: AddPatient):
         if conn:
             conn.close()
 
-@app.post("/remove-provider")
+@app.post("/remove-provider", dependencies=[Depends(RoleChecker(["Admin"]))])
 async def remove_provider(data: RemoveProvider):
     conn = None
     cur = None

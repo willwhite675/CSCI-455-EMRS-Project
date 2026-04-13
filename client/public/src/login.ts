@@ -7,27 +7,35 @@ function login(): void {
     const username = loginUsername.value;
     const password = loginPassword.value;
 
-    fetch("http://localhost:8001/login", {
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
+
+    fetch("http://localhost:8001/token", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: JSON.stringify({ username, password, })
+        body: formData
     })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                //Keeping this in the session data isn't good security practice, but this is just for demonstration.
-                //In reality, you would create a token and then check the token
-                sessionStorage.setItem("isAdmin", String(data.isAdmin))
-                window.location.href = "../dashboard/dashboard.html";
-            } else {
-                alert(data.message ?? "Incorrect username or password");
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Authentication failed");
             }
+            return response.json();
+        })
+        .then(data => {
+            // Store the access token in sessionStorage
+            sessionStorage.setItem("access_token", data.access_token);
+            sessionStorage.setItem("token_type", data.token_type);
+            sessionStorage.setItem("isAdmin", String(data.is_admin));
+            sessionStorage.setItem("userType", data.user_type);
+
+            window.location.href = "../dashboard/dashboard.html";
         })
         .catch((e) => {
             console.error(e);
-            alert("Network or server error");
+            alert("Incorrect username or password");
         });
 }
 

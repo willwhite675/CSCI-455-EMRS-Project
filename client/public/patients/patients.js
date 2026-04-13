@@ -35,13 +35,34 @@ function attachRecordListeners() {
 function addPatient() {
 }
 document.addEventListener("DOMContentLoaded", () => {
+    // Get the access token from sessionStorage
+    const accessToken = sessionStorage.getItem("access_token");
+    if (!accessToken) {
+        // Redirect to login if no token
+        window.location.href = "../login/login.html";
+        return;
+    }
     fetch("http://localhost:8001/get-patients", {
         method: "GET",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
         }
     })
-        .then(response => response.json())
+        .then(response => {
+        if (response.status === 401) {
+            // Token invalid or expired, redirect to login
+            sessionStorage.clear();
+            window.location.href = "../login/login.html";
+            throw new Error("Unauthorized");
+        }
+        if (response.status === 403) {
+            alert("You don't have permission to view patients");
+            window.location.href = "../dashboard/dashboard.html";
+            throw new Error("Forbidden");
+        }
+        return response.json();
+    })
         .then(data => {
         patientData = data;
         getPatients();

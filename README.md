@@ -51,6 +51,7 @@ npm run build
 7. Go to **File &rarr; Load SQL File**
 8. Select `db/schema.sql`
 9. Click **Execute**
+10. Default admin for this system is: username: `dave` and password `dave`
 
 Each person uses their own local MariaDB instance. Database credentials are stored in `.env`, DO NOT commit to git
 

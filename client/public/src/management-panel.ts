@@ -1,3 +1,4 @@
+
 declare var $: any;
 
 let providerData:any
@@ -32,28 +33,35 @@ function addEmployee() {
     const employeeID = addEmployeeID.value;
     const providerID = addEmployeeProviderID.value;
     const departmentID = addEmployeeDepartmentSelect.value;
+    const accessToken = sessionStorage.getItem("access_token");
+
+    if (!accessToken) {
+        window.location.href = "../login/login.html";
+        return;
+    }
 
     if (employeeID && providerID && departmentID) {
         fetch("http://localhost:8001/add-provider", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`
             },
             body: JSON.stringify({employeeID, providerID, departmentID}, ),
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                addEmployeeDialog.close();
-                location.reload();
-            }
-            else {
-                alert(data.message ?? "Failed to add employee");
-            }
-        })
-        .catch(error => {
-            console.error("Error adding employee:", error);
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    addEmployeeDialog.close();
+                    location.reload();
+                }
+                else {
+                    alert(data.message ?? "Failed to add employee");
+                }
+            })
+            .catch(error => {
+                console.error("Error adding employee:", error);
+            });
 
     }
 }
@@ -74,10 +82,18 @@ function attachRemoveButtonListeners() {
 }
 
 function removeEmployee(username: string) {
+    const accessToken = sessionStorage.getItem("access_token");
+
+    if (!accessToken) {
+        window.location.href = "../login/login.html";
+        return;
+    }
+
     fetch("http://localhost:8001/remove-provider", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
         },
         body: JSON.stringify({username}),
     })
@@ -96,13 +112,35 @@ function removeEmployee(username: string) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    const accessToken = sessionStorage.getItem("access_token");
+
+    if (!accessToken) {
+        window.location.href = "../login/login.html";
+        return;
+    }
+
     fetch("http://localhost:8001/get-providers", {
         method: "GET",
         headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
         }
     })
-        .then(response => response.json())
+        .then(response => {
+            if (response.status === 401) {
+                // Token invalid or expired, redirect to login
+                sessionStorage.clear();
+                window.location.href = "../login/login.html";
+                alert("Invalid credentials");
+                throw new Error("Unauthorized");
+            }
+            if (response.status === 403) {
+                alert("You don't have permission to view employees");
+                window.location.href = "../dashboard/dashboard.html";
+                throw new Error("Forbidden");
+            }
+            return response.json();
+        })
         .then(data => {
             providerData = data
             getProviders()

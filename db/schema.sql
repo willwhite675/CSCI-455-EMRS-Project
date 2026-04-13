@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS User
     email            VARCHAR(100) NOT NULL UNIQUE,
     twoFactorEnabled BOOLEAN      Not NULL DEFAULT FALSE,
     userType         VARCHAR(20)  NOT NULL
-        CHECK (userType IN ('Patient', 'Provider', 'Guest'))
+        CHECK (userType IN ('Patient', 'Provider', 'Admin'))
 );
 
 CREATE TABLE IF NOT EXISTS Patient
