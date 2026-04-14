@@ -284,12 +284,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
             )
 
         # Check if user is an administrator
-        cur.execute(
-            "SELECT ID FROM administrator WHERE ID = ?",
-            (form_data.username.strip(),)
-        )
-        admin_row = cur.fetchone()
-        is_admin = admin_row is not None
+        is_admin = row[1] == "Admin"
 
         # For now, using username as token
         return {
@@ -446,11 +441,15 @@ async def remove_provider(data: RemoveProvider):
             raise HTTPException(status_code=404, detail="Provider not found")
 
         cur.execute(
-        "DELETE FROM healthcareprovider WHERE ID = ?",
+            "UPDATE user SET disabled = True WHERE ID = ?",
             (data.username.strip(),)
         )
         cur.execute(
-        "UPDATE user SET userType = 'Patient' WHERE ID = ?",
+            "DELETE FROM healthcareprovider WHERE ID = ?",
+            (data.username.strip(),)
+        )
+        cur.execute(
+            "UPDATE user SET userType = 'Patient' WHERE ID = ?",
             (data.username.strip(),)
         )
 

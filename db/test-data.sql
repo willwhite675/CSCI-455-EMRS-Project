@@ -1,7 +1,7 @@
 USE emrs_database;
 
 INSERT INTO user (ID, authCredentials, firstName, lastName, phoneNumber, age, gender, email, twoFactorEnabled, userType) VALUES ('dave', '$2a$12$F8/.0Ywfhkr.Z69KPapgMe/2J2afrBb3sI8XEjIfAhWFXQwCKrfoC', 'dave', 'dave', '2', 10000, 'Male', 'dave@dave', TRUE, 'Admin');
-#Adding test data to user table but none of these passwords actually work, just filler text
+#Adding test data to user table, but none of these passwords actually work, just filler text
 INSERT INTO User (ID, authCredentials, firstName, lastName, phoneNumber, age, gender, email, twoFactorEnabled, userType) VALUES ('l_skywalker', '$2b$12$K1H7Xp7v8Y6r9Q2w3E4r5u9I8o7p6a5s4d3f2g1h0j9k8l7m6n5o4', 'Luke', 'Skywalker', '555-0101', 23, 'Male', 'luke.skywalker@rebelalliance.org', TRUE, 'Patient');
 INSERT INTO User (ID, authCredentials, firstName, lastName, phoneNumber, age, gender, email, twoFactorEnabled, userType) VALUES ('princess_leia', '$2b$12$L2I8Yq8w9Z7s0R3x4F5s6v0J9p8q7b6t5e4g3h1i0k9l8m7n6o5p', 'Leia', 'Organa', '555-0102', 23, 'Female', 'leia.organa@alderaan.gov', FALSE, 'Patient');
 INSERT INTO User (ID, authCredentials, firstName, lastName, phoneNumber, age, gender, email, twoFactorEnabled, userType) VALUES ('scruffy_nerfherder', '$2b$12$M3J9Zr9x0A8t1S4y5G6t7w1K0q9r8c7u6f5h4i2j1l0m9n8o7p6q', 'Han', 'Solo', '555-0103', 35, 'Male', 'han.solo@millenniumfalcon.com', FALSE, 'Patient');

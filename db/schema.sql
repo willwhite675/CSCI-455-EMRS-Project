@@ -1,7 +1,7 @@
 CREATE DATABASE IF NOT EXISTS EMRS_database;
 USE EMRS_database;
 
-# ── Department (NEW) ──────────────────────────────────────────────
+# ── Department ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS Department
 (
     departmentID   INT PRIMARY KEY AUTO_INCREMENT,
@@ -20,8 +20,9 @@ CREATE TABLE IF NOT EXISTS User
     gender           VARCHAR(10)  NOT NULL,
     email            VARCHAR(100) NOT NULL UNIQUE,
     twoFactorEnabled BOOLEAN      Not NULL DEFAULT FALSE,
-    userType         VARCHAR(20)  NOT NULL
-        CHECK (userType IN ('Patient', 'Provider', 'Admin'))
+    userType         VARCHAR(20)  NOT NULL DEFAULT 'Patient',
+        CHECK (userType IN ('Patient', 'Provider', 'Admin')),
+    disabled        BOOLEAN       NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS Patient
@@ -72,7 +73,7 @@ CREATE TABLE IF NOT EXISTS MedicalRecord
 (
     recordID    INT PRIMARY KEY AUTO_INCREMENT,
     encodedData TEXT        NOT NULL,
-    isLocked    BOOLEAN DEFAULT FALSE,
+    isLocked    BOOLEAN DEFAULT FALSE NOT NULL,
     patientID   VARCHAR(50) NOT NULL,
     FOREIGN KEY (patientID) REFERENCES Patient (ID)
         ON DELETE CASCADE
@@ -84,7 +85,7 @@ CREATE TABLE IF NOT EXISTS Visit
     Purpose  VARCHAR(255) NOT NULL,
     Time     VARCHAR(50)  NOT NULL,
     Date     DATE         NOT NULL,
-    WalkIn   BOOLEAN DEFAULT FALSE,
+    WalkIn   BOOLEAN DEFAULT FALSE NOT NULL,
     recordID INT          NOT NULL,
     FOREIGN KEY (recordID) REFERENCES MedicalRecord (recordID)
         ON DELETE CASCADE
@@ -94,7 +95,7 @@ CREATE TABLE IF NOT EXISTS Billing
 (
     billingID VARCHAR(50) PRIMARY KEY,
     amount    DOUBLE      NOT NULL,
-    status    VARCHAR(50) DEFAULT 'Pending',
+    status    VARCHAR(50) NOT NULL DEFAULT 'Pending',
     patientID VARCHAR(50) NOT NULL,
     FOREIGN KEY (patientID) REFERENCES Patient (ID)
         ON DELETE CASCADE
