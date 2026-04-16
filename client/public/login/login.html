@@ -12,16 +12,15 @@
         <span>Health Inc</span>
     </div>
     <h1>Welcome to Health Inc</h1>
-    <div class="usernameContainer">
-        <label for="username" id="usernameLabel">Username</label>
-        <input type="text" aria-label="username" id="username">
-    </div>
-    <div class="passwordContainer">
-        <label for="password" id="passwordLabel">Password</label>
-        <input type="text" aria-label="password" id="password">
-    </div>
-    <div class="loginButtonContainer">
-        <button class="loginButton" id="loginButton">Submit</button>
+    <div id="loginFormContainer">
+        <form id="loginForm">
+            <label for="username" id="usernameLabel">Username</label>
+            <input type="text" aria-label="username" id="username" autofocus required>
+            <label for="password" id="passwordLabel">Password</label>
+            <input type="password" aria-label="password" id="password" required>
+            <button type="submit" id="loginButton">Login</button>
+            <button id="createAccountButton">Create Account</button>
+        </form>
     </div>
 </div>
 <script src="login.js"></script>

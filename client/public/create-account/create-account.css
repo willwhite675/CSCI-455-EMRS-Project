@@ -8,13 +8,13 @@ body{
     scale: 1.2;
     font-family: "Comic Sans MS", serif;
 
-    .loginContainer{
+    .createAccountContainer{
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 25rem;
-        width: 25rem;
+        height: 50rem;
+        width: 40rem;
         border: black solid 1px;
 
         .logo{
@@ -26,14 +26,14 @@ body{
             text-align: center;
         }
 
-        #loginForm{
+        #createAccountForm{
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
 
-            #username, #password{
-                margin: .5rem;
+            .inputField{
+                margin: 0.5rem;
                 overflow-y: hidden;
                 resize: none;
                 line-height: 1.5em;
@@ -41,7 +41,7 @@ body{
                 width: 12rem;
             }
 
-            #loginButton, #createAccountButton{
+            #backButton, #createAccountButton{
                 box-sizing: content-box;
                 cursor: pointer;
                 background-color: transparent;
@@ -51,9 +51,15 @@ body{
                 width: 12rem;
                 height: 2rem;
             }
-            #loginButton:hover, #createAccountButton:hover{
+            #backButton:hover, #createAccountButton:hover{
                 background-color: black;
                 color: white;
+            }
+            select{
+                font-size: 1rem;
+                width: 12rem;
+                padding: 0.5rem;
+                margin: 0.5rem;
             }
         }
     }

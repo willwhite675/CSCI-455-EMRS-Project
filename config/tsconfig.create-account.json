@@ -1,0 +1,9 @@
+{
+  "compilerOptions":{
+    "outDir": "../client/public/create-account",
+    "rootDir": "../client/public/src"
+  },
+  "include":[
+    "../client/public/src/create-account.ts"
+  ]
+}
