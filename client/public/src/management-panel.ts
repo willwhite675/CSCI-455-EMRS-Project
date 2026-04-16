@@ -136,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (response.status === 403) {
                 alert("You don't have permission to view employees");
-                window.location.href = "../dashboard/dashboard.html";
+                window.location.href = "../login/login.html";
                 throw new Error("Forbidden");
             }
             return response.json();

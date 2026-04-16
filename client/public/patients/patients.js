@@ -3,6 +3,7 @@ let patientData;
 let patientDataTable = null;
 const addPatientButton = document.getElementById("addPatientButton");
 const addPatientDialog = document.getElementById("addPatientDialog");
+let viewRecord = false;
 function getPatients() {
     const patientTableBody = document.getElementById("patientTableBody");
     if (patientTableBody) {
@@ -28,9 +29,22 @@ function attachRecordListeners() {
         tr.addEventListener('click', (e) => {
             const row = e.target.closest('tr');
             const patientID = row?.querySelector('td:first-child')?.textContent;
-            //Open record of patient with patientID
+            viewRecord = true;
+            viewRecordHandler();
         });
     });
+}
+function viewRecordHandler() {
+    if (viewRecord) {
+        const patientID = document.getElementById("patientID");
+        const patientTable = document.getElementById("patientsTable");
+        patientTable.style.display = "table";
+        patientID.value = patientData.patients[0].ID;
+    }
+}
+function hideTable() {
+    const patientTable = document.getElementById("patientsTable");
+    patientTable.style.display = "none";
 }
 function addPatient() {
 }
@@ -58,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (response.status === 403) {
             alert("You don't have permission to view patients");
-            window.location.href = "../dashboard/dashboard.html";
+            window.location.href = "../login/login.html";
             throw new Error("Forbidden");
         }
         return response.json();

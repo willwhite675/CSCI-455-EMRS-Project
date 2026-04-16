@@ -253,6 +253,27 @@ async def read_users_me(
     # Get current user
     return current_user
 
+@app.get("/users/{username}")
+async def get_record(username: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT * FROM user WHERE username = ?",
+            (username.strip(),)
+        )
+        row = cur.fetchone()
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 @app.post("/token")
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # OAuth2 token login endpoint
