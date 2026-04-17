@@ -30,16 +30,14 @@ function attachRecordListeners() {
             const row = e.target.closest('tr');
             const patientID = row?.querySelector('td:first-child')?.textContent;
             viewRecord = true;
-            viewRecordHandler();
+            viewRecordHandler(patientID);
         });
     });
 }
-function viewRecordHandler() {
+function viewRecordHandler(patientID) {
     if (viewRecord) {
-        const patientID = document.getElementById("patientID");
-        const patientTable = document.getElementById("patientsTable");
+        const patientTable = document.getElementById("recordView");
         patientTable.style.display = "table";
-        patientID.value = patientData.patients[0].ID;
     }
 }
 function hideTable() {

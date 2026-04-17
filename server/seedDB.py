@@ -1,10 +1,18 @@
 import mariadb
-import bcrypt
 import os
+from Crypto.Protocol.KDF import bcrypt, bcrypt_check
+from Crypto.Random import get_random_bytes
 from dotenv import load_dotenv
+
+BCRYPT_COST = 12
 
 # Load environment variables
 load_dotenv()
+
+def hash_password(password: str) -> bytes:
+    password_bytes = password.encode("utf-8")
+    salt = get_random_bytes(16)
+    return bcrypt(password_bytes, BCRYPT_COST, salt)
 
 def create_default_admin():
     try:
@@ -19,17 +27,16 @@ def create_default_admin():
         cursor = conn.cursor()
 
         # Hash the password
-        password = b"dave"
-        hashed_password = bcrypt.hashpw(password, bcrypt.gensalt()).decode('utf-8')
+        password = "dave"
+        hashed_password = hash_password(password)
 
         # Insert the admin into the new 'User' table
-        # Using INSERT IGNORE so it doesn't crash if 'dave' or the email already exists
         cursor.execute(
             """
-            INSERT IGNORE INTO User (username, password, email, role)
+            INSERT IGNORE INTO useraccount (username, password, email, role)
             VALUES (?, ?, ?, ?)
             """,
-            ('dave', hashed_password, 'admin@emrs.local', 'Admin')
+            ('dave', hashed_password, 'dave@dave.com', 'Admin')
         )
 
         conn.commit()

@@ -1,4 +1,5 @@
 from typing import Annotated, List
+from datetime import date
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -33,7 +34,7 @@ class RoleChecker:
 
     def __call__(self, user: User = Depends(get_current_active_user)):
         # Check if the user's role is in the allowed list
-        if user.userType not in self.allowed_roles:
+        if user.role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Operation not permitted"
@@ -46,10 +47,8 @@ class Login(BaseModel):
 class User(BaseModel):
     username: str
     email: str | None = None
-    firstName: str | None = None
-    lastName: str | None = None
     disabled: bool | None = None
-    userType: str | None = None
+    role: str | None = None
 
 class UserInDB(User):
     hashed_password: str
@@ -60,15 +59,20 @@ class CreateAccount(BaseModel):
     firstName: str
     lastName: str
     phoneNumber: str
-    age: int
+    DOB: date
     gender: str
     email: str
-    userType: str
+    role: str
+    insuranceDetails: str
 
 class AddProvider(BaseModel):
-    employeeID: str
-    providerID: str
-    departmentID: str
+    accountID: int
+    providerID: int
+    departmentID: int
+    firstName: str
+    lastName: str
+    providerType: str
+    specialty: str
 
 class AddPatient(BaseModel):
     username: str
@@ -94,7 +98,7 @@ def get_user_from_db(username: str):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT ID, authCredentials, firstName, lastName, email, userType FROM user WHERE ID = ?",
+            "SELECT username, password, email, role FROM useraccount WHERE username = ?",
             (username.strip(),)
         )
         row = cur.fetchone()
@@ -103,10 +107,8 @@ def get_user_from_db(username: str):
             return UserInDB(
                 username=row[0],
                 hashed_password=row[1],
-                firstName=row[2],
-                lastName=row[3],
-                email=row[4],
-                userType=row[5],
+                email=row[2],
+                role=row[3],
                 disabled=False
             )
         return None
@@ -143,25 +145,25 @@ async def get_providers():
 
         cur.execute("""
                     SELECT
-                        hp.ID,
-                        u.firstName,
-                        u.lastName,
-                        u.email,
                         hp.providerID,
+                        hp.firstName,
+                        hp.lastName,
+                        u.email,
+                        hp.accountID,
                         hp.departmentID,
                         d.departmentName
                     FROM healthcareprovider hp
-                        LEFT JOIN user u ON hp.ID = u.ID
+                        LEFT JOIN useraccount u ON hp.accountID = u.accountID
                         LEFT JOIN department d ON hp.departmentID = d.departmentID
                     """)
         providers = cur.fetchall()
         provider_list = [
             {
-                "ID": row[0],
+                "providerID": row[0],
                 "firstName": row[1],
                 "lastName": row[2],
                 "email": row[3],
-                "providerID": row[4],
+                "accountID": row[4],
                 "departmentID": row[5],
                 "departmentName": row[6]
             }
@@ -169,6 +171,39 @@ async def get_providers():
         ]
 
         return {"providers": sorted(provider_list, key=lambda x: x["firstName"])}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-allergies", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_allergies(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT
+                        allergen
+                    FROM patientallergy
+                    WHERE patientID = %s
+                    """, (patientID,))
+
+        allergies = cur.fetchall()
+        return {"success": True, "allergies": allergies}
 
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}
@@ -190,26 +225,26 @@ async def get_patients():
 
         cur.execute("""
                     SELECT
-                        p.ID,
-                        u.firstName,
-                        u.lastName,
+                        p.patientID,
+                        p.accountID,
+                        p.firstName,
+                        p.lastName,
                         u.email,
-                        p.allergyProfile,
-                        p.insuranceDetails,
-                        p.lastVisit
+                        p.DOB,
+                        p.insuranceDetails
                     FROM patient p
-                             LEFT JOIN user u ON p.ID = u.ID
+                             LEFT JOIN useraccount u ON p.accountID = u.accountID
                     """)
         patients = cur.fetchall()
         patient_list = [
             {
-                "ID": row[0],
-                "firstName": row[1],
-                "lastName": row[2],
-                "email": row[3],
-                "allergyProfile": row[4],
-                "insuranceDetails": row[5],
-                "lastVisit": row[6]
+                "patientID": row[0],
+                "accountID": row[1],
+                "firstName": row[2],
+                "lastName": row[3],
+                "email": row[4],
+                "DOB": row[5],
+                "insuranceDetails": row[6]
             }
             for row in patients]
 
@@ -263,10 +298,24 @@ async def get_record(username: str):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT * FROM user WHERE username = ?",
+            "SELECT username, email, role FROM useraccount WHERE username = ?",
             (username.strip(),)
         )
         row = cur.fetchone()
+
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        return {"username": row[0], "email": row[1], "role": row[2]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
 
     finally:
         if cur:
@@ -285,7 +334,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT authCredentials, userType FROM user WHERE id = ?",
+            "SELECT password, role FROM useraccount WHERE username = ?",
             (form_data.username.strip(),)
         )
         row = cur.fetchone()
@@ -336,12 +385,12 @@ async def create_account(data: CreateAccount):
 
     try:
         conn = get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(dictionary=True)
 
         hashed_password = hash_password(data.password.strip())
 
         cur.execute(
-            "SELECT ID FROM user WHERE ID = ?",
+            "SELECT username FROM useraccount WHERE username = ?",
             (data.username.strip(),)
         )
         user_row = cur.fetchone()
@@ -349,18 +398,36 @@ async def create_account(data: CreateAccount):
             raise HTTPException(status_code=400, detail="User already exists")
 
         cur.execute(
-            "INSERT INTO user (ID, authCredentials, firstName, lastName, phonenumber, age, gender, email, twoFactorEnabled, userType) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (data.username.strip(), hashed_password, data.firstName.strip(), data.lastName.strip(), data.phoneNumber.strip(), data.age, data.gender.strip(), data.email.strip(), False, data.userType.strip())
+            "INSERT INTO useraccount (username, password, email, twoFactorEnabled, role) VALUES (?, ?, ?, ?, ?)",
+            (data.username.strip(), hashed_password, data.email.strip(), False, data.role.strip())
+        )
+
+        cur.execute("SELECT LAST_INSERT_ID() AS accountID FROM useraccount")
+        accountIDRow = cur.fetchone()
+        if accountIDRow is None:
+            raise HTTPException(status_code=500, detail="Failed to retrieve account ID")
+        accountID = accountIDRow['accountID']
+
+        cur.execute(
+            """
+            INSERT INTO patient (
+                accountID, firstName, lastName, DOB, phoneNumber, gender, insuranceDetails
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (accountID, data.firstName.strip(), data.lastName.strip(), data.DOB, data.phoneNumber.strip(), data.gender.strip(), data.insuranceDetails.strip())
         )
         conn.commit()
 
         if cur.rowcount > 0:
             return {"success": True, "message": "Account created successfully"}
-        else:
-            return {"success": False, "message": "Failed to create account"}
 
+    except HTTPException:
+        raise
     except Exception as e:
-        return {"success": False, "message": f"Server error: {str(e)}"}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
 
     finally:
         if cur:
@@ -375,36 +442,50 @@ async def add_provider(data: AddProvider):
 
     try:
         conn = get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(dictionary=True)
 
-        if data.employeeID.strip() == "" or data.providerID.strip() == "" or data.departmentID.strip() == "":
+        if data.accountID == "" or data.departmentID == "":
             raise HTTPException(status_code=400, detail="Username, Provider ID, and department ID cannot be empty")
 
-        if data.departmentID.strip() not in ["1", "2", "3", "4", "5"]:
+        cur.execute("SELECT departmentID FROM department")
+
+        department_rows = cur.fetchall()
+        department_ids = [row['departmentID'] for row in department_rows]
+
+        if data.departmentID not in department_ids:
             raise HTTPException(status_code=400, detail="Invalid department ID")
 
         cur.execute(
-            "SELECT ID FROM healthcareprovider WHERE ID = ?",
-            (data.employeeID.strip(),)
+            "SELECT accountID FROM healthcareprovider WHERE ID = ?",
+            data.accountID
         )
         provider_row = cur.fetchone()
         if provider_row is not None:
             raise HTTPException(status_code=400, detail="Employee already exists")
 
         cur.execute(
-            "UPDATE user SET userType = 'Provider' WHERE ID = ?",
-            (data.employeeID.strip(),)
+            "UPDATE useraccount SET userType = 'Provider' WHERE ID = ?",
+            data.accountID
         )
 
         cur.execute(
-            "INSERT INTO healthcareprovider (ID, providerID, departmentID) VALUES (?, ?, ?)",
-            (data.employeeID.strip(), data.providerID.strip(), data.departmentID.strip())
+            "SELECT firstName, lastName FROM patient WHERE accountID = ?",
+            data.accountID
+        )
+        patient_row = cur.fetchone()
+        if patient_row is None:
+            raise HTTPException(status_code=400, detail="Patient does not exist")
+        firstName, lastName = patient_row
+
+        cur.execute(
+            "INSERT INTO healthcareprovider (accountID, departmentID, departmentID, firstName, lastName, providerType, specialty) VALUES (?, ?, ?)",
+            (data.accountID, data.providerID, data.departmentID, firstName, lastName, data.providerType, data.specialty)
         )
 
         conn.commit()
 
         if cur.rowcount > 0:
-            return {"success": True, "message": "Provider added successfully"}
+            return {"success": True, "message": f"Provider {firstName} {lastName} added successfully"}
         else:
             return {"success": False, "message": "Failed to add provider"}
 
