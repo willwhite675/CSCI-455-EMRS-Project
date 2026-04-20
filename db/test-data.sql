@@ -93,31 +93,40 @@ INSERT INTO Patient (patientID, accountID, firstName, lastName, DOB, phoneNumber
 
 -- 4. Providers (IDs shifted down, type/specialty added)
 INSERT INTO HealthcareProvider (providerID, accountID, departmentID, firstName, lastName, providerType, specialty) VALUES
-    (1, 26, 1, 'Obi-Wan', 'Kenobi', 'Doctor', 'General Practice'),
-    (2, 27, 2, 'Yoda', 'Grandmaster', 'Doctor', 'Mental Health'),
-    (3, 28, 1, 'Mace', 'Windu', 'Doctor', 'Trauma Surgery'),
-    (4, 29, 3, 'Ahsoka', 'Tano', 'Nurse', 'Infectious Disease'),
-    (5, 30, 2, 'Qui-Gon', 'Jinn', 'Doctor', 'Internal Medicine'),
-    (6, 31, 4, 'Optimus', 'Prime', 'Doctor', 'Cybernetic Surgery'),
-    (7, 32, 5, 'Ratchet', 'Medic', 'Doctor', 'Emergency Medicine'),
-    (8, 33, 4, 'Ironhide', 'Warrior', 'Nurse', 'Cybernetic Surgery'),
-    (9, 34, 5, 'Wheeljack', 'Inventor', 'Doctor', 'General Practice'),
-    (10, 35, 4, 'Ultra', 'Magnus', 'Doctor', 'Internal Medicine'),
-    (11, 36, 3, 'Jon', 'Arbuckle', 'Nurse', 'General Practice'),
-    (12, 37, 5, 'Liz', 'Wilson', 'Doctor', 'General Pediatrics'),
-    (13, 38, 2, 'Lyman', 'N/A', 'Nurse', 'Neurology'),
-    (14, 39, 1, 'Binky', 'Clown', 'Nurse', 'Trauma'),
-    (15, 40, 3, 'Irma', 'Diner', 'Nurse', 'Internal Medicine'),
-    (16, 41, 2, 'Master', 'Wu', 'Doctor', 'Internal Medicine'),
-    (17, 42, 3, 'Misako', 'Garmadon', 'Doctor', 'General Practice'),
-    (18, 43, 5, 'Nya', 'Smith', 'Nurse', 'General Practice'),
-    (19, 44, 4, 'Cyrus', 'Borg', 'Doctor', 'Cybernetic Surgery'),
-    (20, 45, 1, 'Dareth', 'Ninja', 'Nurse', 'General Practice'),
-    (21, 46, 4, 'Cocoa', 'Shell', 'Nurse', 'Internal Medicine'),
-    (22, 47, 2, 'Hemlock', 'Red', 'Doctor', 'General Practice'),
-    (23, 48, 3, 'Shredded', 'Oak', 'Nurse', 'General Practice'),
-    (24, 49, 5, 'Compost', 'Blend', 'Doctor', 'General Practice'),
-    (25, 50, 1, 'Pea', 'Gravel', 'Nurse', 'Trauma');
+    -- Emergency & Trauma (Dept 1)
+    (1, 26, 1, 'Obi-Wan', 'Kenobi', 'Doctor', 'Disaster Management'),
+    (2, 28, 1, 'Mace', 'Windu', 'Doctor', 'Combat Trauma'),
+    (3, 39, 1, 'Binky', 'Clown', 'Nurse', 'Triage & Entertainment'),
+    (4, 45, 1, 'Dareth', 'Ninja', 'Nurse', 'Holistic First Aid'),
+    (5, 50, 1, 'Pea', 'Gravel', 'Nurse', 'Critical Care Recovery'),
+
+    -- Neurology & Mental Health (Dept 2)
+    (6, 27, 2, 'Yoda', 'Grandmaster', 'Doctor', 'Cognitive Behavioral Therapy'),
+    (7, 30, 2, 'Qui-Gon', 'Jinn', 'Doctor', 'Existential Psychotherapy'),
+    (8, 38, 2, 'Lyman', 'N/A', 'Nurse', 'Psychiatric Observation'),
+    (9, 41, 2, 'Master', 'Wu', 'Doctor', 'Zen Meditation & Mindfulness'),
+    (10, 47, 2, 'Hemlock', 'Red', 'Doctor', 'Neuro-Toxicology'),
+
+    -- Internal Medicine (Dept 3)
+    (11, 29, 3, 'Ahsoka', 'Tano', 'Nurse', 'Infectious Diseases'),
+    (12, 36, 3, 'Jon', 'Arbuckle', 'Nurse', 'Allergy & Immunology'),
+    (13, 40, 3, 'Irma', 'Diner', 'Nurse', 'Gastroenterology & Nutrition'),
+    (14, 42, 3, 'Misako', 'Garmadon', 'Doctor', 'Geriatric Care'),
+    (15, 48, 3, 'Shredded', 'Oak', 'Nurse', 'Rheumatology'),
+
+    -- Cybernetic Surgery (Dept 4)
+    (16, 31, 4, 'Optimus', 'Prime', 'Doctor', 'Structural Re-engineering'),
+    (17, 33, 4, 'Ironhide', 'Warrior', 'Nurse', 'Ballistic Prosthetics'),
+    (18, 35, 4, 'Ultra', 'Magnus', 'Doctor', 'Orthopedic Integration'),
+    (19, 44, 4, 'Cyrus', 'Borg', 'Doctor', 'Neural Interfacing'),
+    (20, 46, 4, 'Cocoa', 'Shell', 'Nurse', 'Protective Layering'),
+
+    -- General Pediatrics (Dept 5)
+    (21, 32, 5, 'Ratchet', 'Medic', 'Doctor', 'Developmental Mechanics'),
+    (22, 34, 5, 'Wheeljack', 'Inventor', 'Doctor', 'Kinetic Growth & Prosthesis'),
+    (23, 37, 5, 'Liz', 'Wilson', 'Doctor', 'Feline-Human Hybrid Zoonotics'),
+    (24, 43, 5, 'Nya', 'Smith', 'Nurse', 'Hydro-Therapeutic Care'),
+    (25, 49, 5, 'Compost', 'Blend', 'Doctor', 'Organic Growth Stimulation');
 
 -- 5. Patient History & Allergies (Extracted from Medical Records)
 INSERT INTO PatientHistory (patientID, diagnosis) VALUES

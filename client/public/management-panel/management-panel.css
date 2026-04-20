@@ -1,17 +1,29 @@
-
 #addEmployeeDialog{
     padding: unset;
-    width: 30vh;
+    border: 2px solid black;
+    max-width: 90vw;
 }
 #addEmployeeDialog[open] form{
 
     display: flex;
     flex-direction: column;
-    height: 20rem;
+    min-height: 20rem;
     width: 25rem;
+    max-width: 100%;
     gap: 0.5rem;
     align-items: center;
     padding: 1rem;
+
+    p {
+        margin: 0.5rem;
+        text-align: center;
+    }
+
+    label {
+        align-self: flex-start;
+        margin-left: 3.5rem;
+        margin-top: 0.5rem;
+    }
 
     input{
         font-size: 1rem;

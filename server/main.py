@@ -150,6 +150,8 @@ async def get_providers():
                         hp.lastName,
                         u.email,
                         hp.accountID,
+                        hp.providerType,
+                        hp.specialty,
                         hp.departmentID,
                         d.departmentName
                     FROM healthcareprovider hp
@@ -164,8 +166,10 @@ async def get_providers():
                 "lastName": row[2],
                 "email": row[3],
                 "accountID": row[4],
-                "departmentID": row[5],
-                "departmentName": row[6]
+                "providerType": row[5],
+                "specialty": row[6],
+                "departmentID": row[7],
+                "departmentName": row[8]
             }
             for row in providers
         ]
@@ -225,12 +229,12 @@ async def get_patients():
 
         cur.execute("""
                     SELECT
-                        p.patientID,
-                        p.accountID,
                         p.firstName,
                         p.lastName,
-                        u.email,
+                        p.gender,
                         p.DOB,
+                        p.phoneNumber,
+                        u.email,
                         p.insuranceDetails
                     FROM patient p
                              LEFT JOIN useraccount u ON p.accountID = u.accountID
@@ -238,12 +242,12 @@ async def get_patients():
         patients = cur.fetchall()
         patient_list = [
             {
-                "patientID": row[0],
-                "accountID": row[1],
-                "firstName": row[2],
-                "lastName": row[3],
-                "email": row[4],
-                "DOB": row[5],
+                "firstName": row[0],
+                "lastName": row[1],
+                "gender": row[2],
+                "DOB": row[3],
+                "phoneNumber": row[4],
+                "email": row[5],
                 "insuranceDetails": row[6]
             }
             for row in patients]

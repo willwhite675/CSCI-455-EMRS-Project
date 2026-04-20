@@ -10,12 +10,12 @@ function getPatients() {
         patientData.patients.forEach((patient) => {
             patientTableBody.innerHTML += `
                 <tr class="dataRows">
-                    <td>${patient.ID}</td>
                     <td>${patient.lastName}, ${patient.firstName}</td>
+                    <td>${patient.gender}</td>
+                    <td>${patient.DOB}</td>
+                    <td>${patient.phoneNumber}</td>
                     <td>${patient.email}</td>
-                    <td>${patient.allergyProfile}</td>
                     <td>${patient.insuranceDetails}</td>
-                    <td>${patient.lastVisit}</td>
                 </tr>
                 `;
         });

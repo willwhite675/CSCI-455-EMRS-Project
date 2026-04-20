@@ -12,9 +12,11 @@ function getProviders() {
         providerData.providers.forEach((provider) => {
             employeeTableBody.innerHTML += `
                 <tr>
-                    <td>${provider.ID}</td>
                     <td>${provider.lastName}, ${provider.firstName}</td>
+                    <td>${provider.email}</td>
                     <td>${provider.providerID}</td>
+                    <td>${provider.providerType}</td>
+                    <td>${provider.specialty}</td>
                     <td>${provider.departmentName}</td>
                     <td>${provider.departmentID}</td>
                     <td class="remove-column"><button class="removeButton">Remove</button></td>

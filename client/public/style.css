@@ -7,11 +7,33 @@ body {
     height: 100vh;
 }
 
+@media screen and (max-width: 1366px) {
+    body {
+        zoom: 0.85;
+    }
+
+    dialog {
+        zoom: 0.85;
+    }
+}
+
+@media screen and (max-width: 1024px) {
+    body {
+        zoom: 0.75;
+    }
+
+    dialog {
+        zoom: 0.75;
+    }
+}
+
 table {
     margin-top: 1rem;
     border-collapse: collapse;
     border: 2px solid black;
     letter-spacing: 1px;
+    width: 100%;
+    min-width: 600px;
 }
 th,
 td {
@@ -37,6 +59,13 @@ ul {
     flex: 1;
     padding: 2rem;
     overflow-y: auto;
+    max-width: 100%;
+}
+
+@media screen and (max-width: 1366px) {
+    .container {
+        overflow-x: auto;
+    }
 }
 
 #topNavContainer {
