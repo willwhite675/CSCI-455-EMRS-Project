@@ -17,27 +17,10 @@
 <div id="pageContent">
     <div id="sideNavContainer"></div>
     <div class="container">
-        <button id="addPatientButton" class="standardButton">Add Patient</button>
-        <dialog id="addPatientDialog">
-            <div id="closeDialogContainer">
-                <button id="closeAddPatientDialogButton" class="standardButton">X</button>
-            </div>
-            <form id="addPatientForm">
-                <label for="ID">ID:</label>
-                <input type="text" id="ID" name="ID" required>
-                <label for="providerID">Provider ID:</label>
-                <input type="text" id="providerID" name="email" required>
-                <label for="departmentList">Department:</label>
-                <select id="departmentList" name="department">
-                    <option disabled selected>Select Department</option>
-
-                </select>
-                <button type="submit" id="savePatientButton" class="standardButton">Save</button>
-            </form>
-        </dialog>
         <table id="patientsTable">
             <thead id="patientTableHeader">
             <tr id="patientTableLabels">
+                <th>ID</th>
                 <th>Name</th>
                 <th>Gender</th>
                 <th>DOB</th>
@@ -53,7 +36,9 @@
         <div id="recordView">
             <div id="recordContent">
                 <h2 id="recordTitle"></h2>
-                <div id="recordInfo"></div>
+                <div id="recordInfo">
+
+                </div>
             </div>
         </div>
     </div>

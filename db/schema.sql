@@ -75,10 +75,12 @@ CREATE TABLE IF NOT EXISTS Visit
 CREATE TABLE IF NOT EXISTS Billing
 (
     billingID INT PRIMARY KEY AUTO_INCREMENT,
-    amount    DECIMAL(10,2) NOT NULL, -- Fixed precision for currency
+    amount    DECIMAL(10,2) NOT NULL,
     status    ENUM('Pending', 'Paid', 'Overdue') NOT NULL DEFAULT 'Pending',
     patientID INT NOT NULL,
-    FOREIGN KEY (patientID) REFERENCES Patient (patientID) ON DELETE CASCADE
+    visitID   INT NOT NULL,
+    FOREIGN KEY (patientID) REFERENCES Patient (patientID) ON DELETE CASCADE,
+    FOREIGN KEY (visitID) REFERENCES Visit (visitID) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS SystemLog

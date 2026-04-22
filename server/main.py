@@ -98,7 +98,7 @@ def get_user_from_db(username: str):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT username, password, email, role FROM useraccount WHERE username = ?",
+            "SELECT username, password, email, role FROM useraccount WHERE username = %s",
             (username.strip(),)
         )
         row = cur.fetchone()
@@ -229,6 +229,7 @@ async def get_patients():
 
         cur.execute("""
                     SELECT
+                        p.accountID,
                         p.firstName,
                         p.lastName,
                         p.gender,
@@ -242,13 +243,14 @@ async def get_patients():
         patients = cur.fetchall()
         patient_list = [
             {
-                "firstName": row[0],
-                "lastName": row[1],
-                "gender": row[2],
-                "DOB": row[3],
-                "phoneNumber": row[4],
-                "email": row[5],
-                "insuranceDetails": row[6]
+                "accountID": row[0],
+                "firstName": row[1],
+                "lastName": row[2],
+                "gender": row[3],
+                "DOB": row[4],
+                "phoneNumber": row[5],
+                "email": row[6],
+                "insuranceDetails": row[7]
             }
             for row in patients]
 
@@ -302,7 +304,7 @@ async def get_record(username: str):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT username, email, role FROM useraccount WHERE username = ?",
+            "SELECT username, email, role FROM useraccount WHERE username = %s",
             (username.strip(),)
         )
         row = cur.fetchone()
@@ -327,6 +329,166 @@ async def get_record(username: str):
         if conn:
             conn.close()
 
+@app.get("/get-patient-by-id", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_by_id(accountID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT patientID, firstName, lastName, DOB, phoneNumber, gender, insuranceDetails FROM patient WHERE accountID = %s",
+            (accountID.strip(),)
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient not found"
+            )
+        return {
+            "patientID": row[0],
+            "firstName": row[1],
+            "lastName": row[2],
+            "DOB": row[3],
+            "phoneNumber": row[4],
+            "gender": row[5],
+            "insuranceDetails": row[6]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-medical-history", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_medical_history(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT historyID, diagnosis FROM patienthistory WHERE patientID = %s",
+            (patientID.strip(),)
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        return [{
+            "historyID": row[0],
+            "diagnosis": row[1]}
+        ]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-visits", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_visits(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT v.visitID, v.providerID, pr.lastName, v.visitTimestamp, v.purpose, v.walkIn FROM visit v LEFT JOIN healthcareprovider pr ON v.providerID = pr.providerID WHERE v.patientID = %s",
+            (patientID.strip(),)
+        )
+        visits = cur.fetchall()
+        visit_list = [
+            {
+                "visitID": row[0],
+                "providerID": row[1],
+                "lastName": row[2],
+                "visitTimestamp": row[3],
+                "purpose": row[4],
+                "walkIn": row[5]
+            }
+            for row in visits]
+
+        return {"visits": sorted(visit_list, key=lambda x: x["visitTimestamp"], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-billing-history", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_billing_history(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT b.billingID, b.visitID, b.patientID, b.amount, v.visitTimeStamp, b.status FROM billing b LEFT JOIN visit v ON b.visitID = v.visitID WHERE b.patientID = %s",
+            (patientID.strip(),)
+        )
+
+        billing_history = cur.fetchall()
+        billing_list = [
+            {
+                "billingID": billing[0],
+                "visitID": billing[1],
+                "patientID": billing[2],
+                "amount": billing[3],
+                "visitTimeStamp": billing[4],
+                "status": billing[5]
+            }
+            for billing in billing_history
+        ]
+        return {"billingHistory": sorted(billing_list, key=lambda x: x['visitTimeStamp'], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 @app.post("/token")
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # OAuth2 token login endpoint
@@ -338,7 +500,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT password, role FROM useraccount WHERE username = ?",
+            "SELECT password, role FROM useraccount WHERE username = %s",
             (form_data.username.strip(),)
         )
         row = cur.fetchone()
@@ -394,7 +556,7 @@ async def create_account(data: CreateAccount):
         hashed_password = hash_password(data.password.strip())
 
         cur.execute(
-            "SELECT username FROM useraccount WHERE username = ?",
+            "SELECT username FROM useraccount WHERE username = %s",
             (data.username.strip(),)
         )
         user_row = cur.fetchone()

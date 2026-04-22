@@ -1,6 +1,5 @@
 #addEmployeeDialog{
     padding: unset;
-    border: 2px solid black;
     max-width: 90vw;
 }
 #addEmployeeDialog[open] form{
@@ -20,8 +19,6 @@
     }
 
     label {
-        align-self: flex-start;
-        margin-left: 3.5rem;
         margin-top: 0.5rem;
     }
 
