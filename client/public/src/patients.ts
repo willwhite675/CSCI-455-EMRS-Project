@@ -4,6 +4,8 @@ const accessToken = sessionStorage.getItem("access_token");
 
 let patientData: any;
 let patientDataTable = null;
+let recentPatientVisits = null
+let recentPatientBilling = null
 const patientRecordView = document.getElementById("recordInfo") as HTMLElement
 let viewRecord = false;
 
@@ -130,7 +132,12 @@ function viewRecordHandler(accountID: string | undefined) {
             })
             .then(() => {
                 patientRecordView.innerHTML = `
-                    <h1>${patientData.firstName} ${patientData.lastName}</h1>
+                    <div id="topRecordContainer">
+                    <h1 id="patientName">${patientData.firstName} ${patientData.lastName}</h1>
+                        <div id="backButtonContainer">
+                            <button id="backButton" class="standardButton" onclick="backToPatients()">X</button>
+                        </div>
+                    </div>
                     <div class="record-row">
                         <div class="record-group">
                             <h2 class="patientInfoHeader">Patient Info</h2>
@@ -152,13 +159,14 @@ function viewRecordHandler(accountID: string | undefined) {
                             <p>${patientData.insuranceDetails || 'No insurance information'}</p>
                         </div>
                         <div class="record-group">
-                            <h2 class="patientInfoHeader">Medical History</h2>
-                            <p>${patientMedicalHistoryData?.medicalHistory?.length > 0 ? patientMedicalHistoryData.medicalHistory.map((h: any[]) => `<p>${h[0]}</p>`).join('') : 'No medical history'}</p>
+                                <h2 class="patientInfoHeader">Medical History</h2>
+                                <p>${patientMedicalHistoryData?.medicalHistory?.length > 0 ? patientMedicalHistoryData.medicalHistory.map((h: any) => `<p>${h.diagnosis}</p>`).join('') : 'No medical history'}</p>
+                            </div>
                         </div>
                     </div>
                     <div class="record-row">
                         <div class="record-group">
-                            <h2 class="patientInfoHeader">Recent Visits</h2>
+                            <h2>Recent Visits</h2>
                             <table id="recordTable">
                                 <thead id="recordHeader">
                                     <tr id="recordLabels">
@@ -176,7 +184,7 @@ function viewRecordHandler(accountID: string | undefined) {
                     </div>
                     <div class="record-row">
                         <div class="record-group">
-                            <h2 class="patientInfoHeader">Billing</h2>
+                            <h2>Billing</h2>
                             <table id="billingTable">
                                 <thead id="billingHeader">
                                     <tr id="billingLabels">
@@ -195,40 +203,56 @@ function viewRecordHandler(accountID: string | undefined) {
                 `;
             })
             .then(() =>{
+                const recordTableBody = document.getElementById("recordTableBody");
+                const billingBody = document.getElementById("billingBody");
+
                 patientVisitsData.visits.forEach((visit: any) => {
                     let walkIn = visit.walkIn ? "Yes" : "No";
                     const visitRow = `
-                        <tr>
-                            <td>${visit.visitTimeStamp}</td>
-                            <td>${visit.purpose}</td>
-                            <td>Dr. ${visit.lastName}</td>
-                            <td>${walkIn}</td>
-                        </tr>
-                    `;
-                    document.getElementById("recordTable")?.insertAdjacentHTML("beforeend", visitRow);
+                            <tr>
+                                <td>${visit.visitTimeStamp}</td>
+                                <td>${visit.purpose}</td>
+                                <td>Dr. ${visit.lastName}</td>
+                                <td>${walkIn}</td>
+                            </tr>
+                        `;
+                    recordTableBody?.insertAdjacentHTML("beforeend", visitRow);
                 })
                 patientBillingData.billingHistory.forEach((bill: any) => {
                     const billRow = `
-                        <tr>
-                            <td>${bill.billingID}</td>
-                            <td>${bill.visitTimeStamp}</td>
-                            <td>${bill.amount}</td>
-                            <td>${bill.status}</td>
-                        </tr>
-                    `;
-                    document.getElementById("billingTable")?.insertAdjacentHTML("beforeend", billRow);
+                            <tr>
+                                <td>${bill.billingID}</td>
+                                <td>${bill.visitTimeStamp}</td>
+                                <td>${bill.amount}</td>
+                                <td>${bill.status}</td>
+                            </tr>
+                        `;
+                    billingBody?.insertAdjacentHTML("beforeend", billRow);
                 })
+
+                // Initialize DataTables after a small delay to ensure DOM is fully updated
+                setTimeout(() => {
+                    recentPatientVisits = ($('#recordTable') as any).DataTable();
+                    recentPatientBilling = ($('#billingTable') as any).DataTable();
+                }, 0);
             })
             .catch(error => {
                 console.error("Error fetching patient data:", error);
                 alert("Failed to load patient record");
             });
+
     }
 }
 
 function hideTable() {
     const patientTable = document.getElementById("patientsTable_wrapper") as HTMLTableElement;
     patientTable.style.display = "none";
+}
+
+function backToPatients() {
+    const patientTable = document.getElementById("patientsTable_wrapper") as HTMLTableElement;
+    patientTable.style.display = "table";
+    patientRecordView.innerHTML = ""
 }
 
 document.addEventListener("DOMContentLoaded", () => {

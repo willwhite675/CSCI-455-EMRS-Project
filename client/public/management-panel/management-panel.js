@@ -1,8 +1,9 @@
 "use strict";
 let providerData;
 let providerDataTable = null;
-const addEmployeeID = document.getElementById("ID");
-const addEmployeeProviderID = document.getElementById("providerID");
+const addAccountID = document.getElementById("ID");
+const addEmployeeSpecialty = document.getElementById("specialty");
+const addEmployeeRole = document.getElementById("roleList");
 const addEmployeeDepartmentSelect = document.getElementById("departmentList");
 const addEmployeeButton = document.getElementById('addEmployeeButton');
 const addEmployeeDialog = document.getElementById('addEmployeeDialog');
@@ -11,7 +12,7 @@ function getProviders() {
     if (employeeTableBody) {
         providerData.providers.forEach((provider) => {
             employeeTableBody.innerHTML += `
-                <tr>
+                <tr data-account-id="${provider.accountID}">
                     <td>${provider.lastName}, ${provider.firstName}</td>
                     <td>${provider.email}</td>
                     <td>${provider.providerID}</td>
@@ -27,23 +28,65 @@ function getProviders() {
         attachRemoveButtonListeners();
     }
 }
+function loadDepartments() {
+    const accessToken = sessionStorage.getItem("access_token");
+    if (!accessToken) {
+        window.location.href = "../login/login.html";
+        return;
+    }
+    fetch("http://localhost:8001/get-departments", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
+        }
+    })
+        .then(response => {
+        if (response.status === 401) {
+            sessionStorage.clear();
+            window.location.href = "../login/login.html";
+            alert("Invalid credentials");
+            throw new Error("Unauthorized");
+        }
+        if (response.status === 403) {
+            alert("You don't have permission to view departments");
+            window.location.href = "../login/login.html";
+            throw new Error("Forbidden");
+        }
+        return response.json();
+    })
+        .then(data => {
+        if (data.departments) {
+            data.departments.forEach((dept) => {
+                const option = document.createElement('option');
+                option.value = dept.departmentID;
+                option.textContent = dept.departmentName;
+                addEmployeeDepartmentSelect.appendChild(option);
+            });
+        }
+    })
+        .catch(error => {
+        console.error("Error fetching departments:", error);
+    });
+}
 function addEmployee() {
-    const employeeID = addEmployeeID.value;
-    const providerID = addEmployeeProviderID.value;
+    const accountID = addAccountID.value;
+    const specialty = addEmployeeSpecialty.value;
+    const providerType = addEmployeeRole.value;
     const departmentID = addEmployeeDepartmentSelect.value;
     const accessToken = sessionStorage.getItem("access_token");
     if (!accessToken) {
         window.location.href = "../login/login.html";
         return;
     }
-    if (employeeID && providerID && departmentID) {
+    if (accountID && departmentID && specialty && providerType) {
         fetch("http://localhost:8001/add-provider", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${accessToken}`
             },
-            body: JSON.stringify({ employeeID, providerID, departmentID }),
+            body: JSON.stringify({ accountID, specialty, providerType, departmentID }),
         })
             .then(response => response.json())
             .then(data => {
@@ -61,19 +104,24 @@ function addEmployee() {
     }
 }
 function attachRemoveButtonListeners() {
-    const removeButtons = document.querySelectorAll('.removeButton');
-    removeButtons.forEach(button => {
-        button.addEventListener('click', (e) => {
-            const row = e.target.closest('tr');
-            const employeeID = row?.querySelector('td:first-child')?.textContent;
-            const name = row?.querySelector('td:nth-child(2)')?.textContent;
-            if (employeeID && confirm(`Are you sure you want to remove ${name}?`)) {
-                removeEmployee(employeeID);
+    const employeeTableBody = document.getElementById('employeeTableBody');
+    if (!employeeTableBody)
+        return;
+    employeeTableBody.addEventListener('click', (e) => {
+        const target = e.target;
+        if (target.classList.contains('removeButton')) {
+            const row = target.closest('tr');
+            if (!row)
+                return;
+            const accountID = row.getAttribute('data-account-id');
+            const name = row.querySelector('td:first-child')?.textContent;
+            if (accountID && confirm(`Are you sure you want to remove ${name}?`)) {
+                removeEmployee(accountID);
             }
-        });
+        }
     });
 }
-function removeEmployee(username) {
+function removeEmployee(accountID) {
     const accessToken = sessionStorage.getItem("access_token");
     if (!accessToken) {
         window.location.href = "../login/login.html";
@@ -85,7 +133,7 @@ function removeEmployee(username) {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${accessToken}`
         },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ accountID }),
     })
         .then(response => response.json())
         .then(data => {
@@ -106,6 +154,7 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "../login/login.html";
         return;
     }
+    loadDepartments();
     fetch("http://localhost:8001/get-providers", {
         method: "GET",
         headers: {
@@ -115,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })
         .then(response => {
         if (response.status === 401) {
-            // Token invalid or expired, redirect to login
+            // Token invalid or expired, redirect to log in
             sessionStorage.clear();
             window.location.href = "../login/login.html";
             alert("Invalid credentials");

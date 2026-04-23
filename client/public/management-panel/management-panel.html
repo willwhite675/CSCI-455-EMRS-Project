@@ -26,8 +26,14 @@
                 <p>Please fill out all fields to add a new employee.</p>
                 <label for="ID">ID:</label>
                 <input type="text" id="ID" name="ID" required>
-                <label for="providerID">Provider ID:</label>
-                <input type="text" id="providerID" name="email" required>
+                <label for="specialty">Specialty:</label>
+                <input type="text" id="specialty" name="specialty">
+                <label for="roleList">Role:</label>
+                <select id="roleList" name="role">
+                    <option disabled selected>Select Role</option>
+                    <option value="Nurse">Nurse</option>
+                    <option value="Doctor">Doctor</option>
+                </select>
                 <label for="departmentList">Department:</label>
                 <select id="departmentList" name="department">
                     <option disabled selected>Select Department</option>

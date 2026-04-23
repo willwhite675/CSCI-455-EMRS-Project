@@ -67,10 +67,7 @@ class CreateAccount(BaseModel):
 
 class AddProvider(BaseModel):
     accountID: int
-    providerID: int
     departmentID: int
-    firstName: str
-    lastName: str
     providerType: str
     specialty: str
 
@@ -78,7 +75,7 @@ class AddPatient(BaseModel):
     username: str
 
 class RemoveProvider(BaseModel):
-    username: str
+    accountID: int
 
 def get_connection():
     return mariadb.connect(
@@ -384,16 +381,17 @@ async def get_patient_medical_history(patientID: str):
             "SELECT historyID, diagnosis FROM patienthistory WHERE patientID = %s",
             (patientID.strip(),)
         )
-        row = cur.fetchone()
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-        return [{
-            "historyID": row[0],
-            "diagnosis": row[1]}
+        rows = cur.fetchall()
+
+        medical_history = [
+            {
+                "historyID": row[0],
+                "diagnosis": row[1]
+            }
+            for row in rows
         ]
+
+        return {"medicalHistory": medical_history}
 
     except HTTPException:
         raise
@@ -418,7 +416,7 @@ async def get_patient_visits(patientID: str):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT v.visitID, v.providerID, pr.lastName, v.visitTimestamp, v.purpose, v.walkIn FROM visit v LEFT JOIN healthcareprovider pr ON v.providerID = pr.providerID WHERE v.patientID = %s",
+            "SELECT v.visitID, v.providerID, pr.lastName, v.visitTimeStamp, v.purpose, v.walkIn FROM visit v LEFT JOIN healthcareprovider pr ON v.providerID = pr.providerID WHERE v.patientID = %s",
             (patientID.strip(),)
         )
         visits = cur.fetchall()
@@ -427,13 +425,49 @@ async def get_patient_visits(patientID: str):
                 "visitID": row[0],
                 "providerID": row[1],
                 "lastName": row[2],
-                "visitTimestamp": row[3],
+                "visitTimeStamp": row[3],
                 "purpose": row[4],
                 "walkIn": row[5]
             }
             for row in visits]
 
-        return {"visits": sorted(visit_list, key=lambda x: x["visitTimestamp"], reverse=True)}
+        return {"visits": sorted(visit_list, key=lambda x: x["visitTimeStamp"], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-current-account-id")
+async def get_current_account_id(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT accountID FROM useraccount WHERE username = %s",
+            (current_user.username,)
+        )
+        row = cur.fetchone()
+
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account not found"
+            )
+
+        return {"accountID": row[0]}
 
     except HTTPException:
         raise
@@ -458,7 +492,8 @@ async def get_patient_billing_history(patientID: str):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT b.billingID, b.visitID, b.patientID, b.amount, v.visitTimeStamp, b.status FROM billing b LEFT JOIN visit v ON b.visitID = v.visitID WHERE b.patientID = %s",
+            "SELECT b.billingID, b.visitID, b.patientID, b.amount, v.visitTimeStamp, b.status FROM billing b LEFT "
+            "JOIN visit v ON b.visitID = v.visitID WHERE b.patientID = %s",
             (patientID.strip(),)
         )
 
@@ -601,6 +636,7 @@ async def create_account(data: CreateAccount):
         if conn:
             conn.close()
 
+
 @app.post("/add-provider", dependencies=[Depends(RoleChecker(["Admin"]))])
 async def add_provider(data: AddProvider):
     conn = None
@@ -610,51 +646,57 @@ async def add_provider(data: AddProvider):
         conn = get_connection()
         cur = conn.cursor(dictionary=True)
 
-        if data.accountID == "" or data.departmentID == "":
-            raise HTTPException(status_code=400, detail="Username, Provider ID, and department ID cannot be empty")
+        cur.execute("SELECT departmentID FROM department WHERE departmentID = %s", (data.departmentID,))
+        department_row = cur.fetchone()
 
-        cur.execute("SELECT departmentID FROM department")
-
-        department_rows = cur.fetchall()
-        department_ids = [row['departmentID'] for row in department_rows]
-
-        if data.departmentID not in department_ids:
+        if department_row is None:
             raise HTTPException(status_code=400, detail="Invalid department ID")
 
         cur.execute(
-            "SELECT accountID FROM healthcareprovider WHERE ID = ?",
-            data.accountID
+            "SELECT accountID FROM healthcareprovider WHERE accountID = %s",
+            (data.accountID,)
         )
         provider_row = cur.fetchone()
         if provider_row is not None:
-            raise HTTPException(status_code=400, detail="Employee already exists")
+            raise HTTPException(status_code=400, detail="Employee already exists as a provider")
 
         cur.execute(
-            "UPDATE useraccount SET userType = 'Provider' WHERE ID = ?",
-            data.accountID
-        )
-
-        cur.execute(
-            "SELECT firstName, lastName FROM patient WHERE accountID = ?",
-            data.accountID
+            "SELECT firstName, lastName FROM patient WHERE accountID = %s",
+            (data.accountID,)
         )
         patient_row = cur.fetchone()
         if patient_row is None:
-            raise HTTPException(status_code=400, detail="Patient does not exist")
-        firstName, lastName = patient_row
+            raise HTTPException(status_code=400, detail="Patient/Account does not exist")
+
+        firstName = patient_row['firstName']
+        lastName = patient_row['lastName']
 
         cur.execute(
-            "INSERT INTO healthcareprovider (accountID, departmentID, departmentID, firstName, lastName, providerType, specialty) VALUES (?, ?, ?)",
-            (data.accountID, data.providerID, data.departmentID, firstName, lastName, data.providerType, data.specialty)
+            "UPDATE useraccount SET role = 'Provider' WHERE accountID = %s",
+            (data.accountID,)
+        )
+
+        cur.execute(
+            """INSERT INTO healthcareprovider
+                   (accountID, departmentID, firstName, lastName, providerType, specialty)
+               VALUES (%s, %s, %s, %s, %s, %s)""",
+            (data.accountID, data.departmentID, firstName, lastName,
+             data.providerType, data.specialty)
         )
 
         conn.commit()
 
-        if cur.rowcount > 0:
-            return {"success": True, "message": f"Provider {firstName} {lastName} added successfully"}
-        else:
-            return {"success": False, "message": "Failed to add provider"}
+        return {"success": True, "message": f"Provider {firstName} {lastName} added successfully"}
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
     finally:
         if cur:
             cur.close()
@@ -701,30 +743,33 @@ async def remove_provider(data: RemoveProvider):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT ID FROM healthcareprovider WHERE ID = ?",
-            (data.username.strip(),)
+            "SELECT accountID FROM healthcareprovider WHERE accountID = %s",
+            (data.accountID,)
         )
         provider_row = cur.fetchone()
         if provider_row is None:
             raise HTTPException(status_code=404, detail="Provider not found")
 
         cur.execute(
-            "UPDATE user SET disabled = True WHERE ID = ?",
-            (data.username.strip(),)
+            "DELETE FROM healthcareprovider WHERE accountID = %s",
+            (data.accountID,)
         )
         cur.execute(
-            "DELETE FROM healthcareprovider WHERE ID = ?",
-            (data.username.strip(),)
-        )
-        cur.execute(
-            "UPDATE user SET userType = 'Patient' WHERE ID = ?",
-            (data.username.strip(),)
+            "UPDATE useraccount SET role = 'Patient' WHERE accountID = %s",
+            (data.accountID,)
         )
 
         conn.commit()
 
         return {"success": True, "message": "Provider removed successfully"}
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
     finally:
         if cur:
             cur.close()
