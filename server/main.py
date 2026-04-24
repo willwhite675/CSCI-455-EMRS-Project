@@ -49,6 +49,7 @@ class User(BaseModel):
     email: str | None = None
     disabled: bool | None = None
     role: str | None = None
+    accountID: int | None = None
 
 class UserInDB(User):
     hashed_password: str
@@ -105,6 +106,7 @@ def get_user_by_account_id(account_id: int):
                 hashed_password=row[1],
                 email=row[2],
                 role=row[3],
+                accountID=account_id,
                 disabled=False
             )
         return None
@@ -228,10 +230,9 @@ async def get_self_allergies(current_user: Annotated[User, Depends(get_current_a
         cur = conn.cursor()
 
         cur.execute("""
-                    SELECT patientID FROM patient WHERE accountID = (
-                        SELECT accountID FROM useraccount WHERE username = %s
-                    )
-                    """, (current_user.username,))
+                    SELECT patientID FROM patient WHERE accountID = %s
+                    
+                    """, (current_user.accountID,))
         
         patient_row = cur.fetchone()
         if not patient_row:
@@ -520,8 +521,8 @@ async def get_self_medical_history(current_user: Annotated[User, Depends(get_cur
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT historyID, diagnosis FROM patienthistory WHERE patientID = (SELECT patientID FROM patient WHERE accountID = (SELECT accountID FROM useraccount WHERE username = %s))",
-            (current_user.username,)
+            "SELECT historyID, diagnosis FROM patienthistory WHERE patientID = (SELECT patientID FROM patient WHERE accountID = %s)",
+            (current_user.accountID,)
         )
         rows = cur.fetchall()
 
@@ -598,8 +599,8 @@ async def get_self_visits(current_user: Annotated[User, Depends(get_current_acti
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT v.visitID, v.providerID, pr.lastName, v.visitTimeStamp, v.purpose, v.walkIn FROM visit v LEFT JOIN healthcareprovider pr ON v.providerID = pr.providerID WHERE v.patientID = (SELECT patientID FROM patient WHERE accountID = (SELECT accountID FROM useraccount WHERE username = %s))",
-            (current_user.username,)
+            "SELECT v.visitID, v.providerID, pr.lastName, v.visitTimeStamp, v.purpose, v.walkIn FROM visit v LEFT JOIN healthcareprovider pr ON v.providerID = pr.providerID WHERE v.patientID = (SELECT patientID FROM patient WHERE accountID = %s)",
+            (current_user.accountID,)
         )
         visits = cur.fetchall()
         visit_list = [
@@ -749,6 +750,101 @@ async def get_self_billing_history(current_user: Annotated[User, Depends(get_cur
             for billing in billing_history
         ]
         return {"billingHistory": sorted(billing_list, key=lambda x: x['visitTimeStamp'], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-my-labs", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def my_labs(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT labResultID, testName, resultValue, testDate FROM labResult WHERE patientID = (SELECT patientID FROM patient WHERE accountID = %s)",
+            (current_user.accountID,)
+        )
+        labs = cur.fetchall()
+        lab_list = [
+            {
+                "labResultID": lab[0],
+                "testName": lab[1],
+                "resultValue": lab[2],
+                "testDate": lab[3]
+            }
+            for lab in labs
+        ]
+        return {"labs": lab_list}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-labs")
+async def get_labs():
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            SELECT
+                l.labResultID,
+                p.firstName,
+                p.lastName,
+                l.testName,
+                l.testDate,
+                l.resultValue,
+                l.referenceRange,
+                l.status,
+                l.notes
+             FROM labResult l
+                LEFT JOIN patient p ON l.patientID = p.patientID
+            """
+        )
+
+        labs = cur.fetchall()
+        lab_list = [
+            {
+                "labResultID": row[0],
+                "firstName": row[1],
+                "lastName": row[2],
+                "testName": row[3],
+                "testDate": row[4],
+                "resultValue": row[5],
+                "referenceRange": row[6],
+                "status": row[7],
+                "notes": row[8]
+            }
+            for row in labs
+        ]
+
+        return lab_list
 
     except HTTPException:
         raise

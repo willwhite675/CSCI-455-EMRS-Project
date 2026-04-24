@@ -83,6 +83,23 @@ CREATE TABLE IF NOT EXISTS Billing
     FOREIGN KEY (visitID) REFERENCES Visit (visitID) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS LabResult
+(
+    labResultID   INT PRIMARY KEY AUTO_INCREMENT,
+    patientID     INT NOT NULL,
+    visitID       INT,
+    testName      VARCHAR(255) NOT NULL,
+    testDate      DATETIME NOT NULL,
+    resultValue   VARCHAR(500),
+    referenceRange VARCHAR(100),
+    status        ENUM('Pending', 'Completed', 'Abnormal') NOT NULL DEFAULT 'Pending',
+    notes         TEXT,
+    orderedBy     INT,
+    FOREIGN KEY (patientID) REFERENCES Patient (patientID) ON DELETE CASCADE,
+    FOREIGN KEY (visitID) REFERENCES Visit (visitID) ON DELETE SET NULL,
+    FOREIGN KEY (orderedBy) REFERENCES HealthcareProvider (providerID) ON DELETE SET NULL
+);
+
 CREATE TABLE IF NOT EXISTS SystemLog
 (
     logID      INT PRIMARY KEY AUTO_INCREMENT,

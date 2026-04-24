@@ -285,3 +285,25 @@ INSERT INTO Billing (billingID, amount, status, patientID, visitID) VALUES
     (48, 150.00, 'Pending', 24, 48),
     (49, 300.00, 'Pending', 16, 49),
     (50, 950.00, 'Pending', 5, 50);
+
+INSERT INTO LabResult (labResultID, patientID, visitID, testName, testDate, resultValue, referenceRange, status, notes, orderedBy) VALUES
+    (1, 1, 1, 'Midichlorian Count', '2026-01-15 10:00:00', '20,000 ppm', '> 2,500 ppm', 'Completed', 'Force sensitivity confirmed; patient is stable.', 1),
+    (2, 3, 2, 'Carbonite Toxicity Screen', '2026-03-22 15:30:00', '15%', '< 5%', 'Abnormal', 'High levels of residual carbonite in the bloodstream.', 2),
+    (3, 6, 3, 'Energon Purity Analysis', '2026-04-01 11:45:00', '98%', '95-100%', 'Completed', 'Fuel quality is optimal.', 21),
+    (4, 11, 4, 'Serum Cholesterol (Lasagna Panel)', '2026-04-07 11:00:00', '350 mg/dL', '< 200 mg/dL', 'Abnormal', 'Extreme levels of pasta-based lipids detected.', 23),
+    (5, 13, 5, 'Stress Cortisol Level', '2025-08-19 16:45:00', '45 mcg/dL', '5-23 mcg/dL', 'Abnormal', 'Elevated stress likely due to international shipping.', 15),
+    (6, 20, 6, 'Elemental Resonance Scan', '2026-04-02 09:00:00', 'Golden', 'Green-Golden', 'Completed', 'Power levels are recalibrating correctly.', 9),
+    (7, 2, 7, 'Equilibrium & Vestibular Test', '2026-03-17 18:00:00', 'Pass', 'Pass/Fail', 'Completed', 'Patient maintained balance during ritual despite scotch.', 6),
+    (8, 5, 8, 'Logic Gate Integrity Check', '2025-11-30 14:00:00', '99.9%', '100%', 'Abnormal', 'Minor glitch in the complaining subroutine.', 19),
+    (9, 8, 9, 'Alloy Density Scan', '2026-02-28 13:00:00', 'Solid Titanium', 'N/A', 'Completed', 'Chassis integrity is exceptional.', 22),
+    (10, 18, 10, 'Coolant Viscosity Test', '2026-03-30 16:30:00', 'High', 'Medium', 'Abnormal', 'Coolant thickening due to internal overheating.', 16),
+    (11, 21, 11, 'Organic Decay Rate', '2026-04-05 10:00:00', '0.5% per week', '< 0.1% per week', 'Abnormal', 'Premature decomposition noted in lower layers.', 25),
+    (12, 17, 12, 'Electrical Discharge Frequency', '2026-01-20 12:00:00', '500 kV', '200-300 kV', 'Abnormal', 'Voltage spikes occurring during emotional outbursts.', 4),
+    (13, 4, 13, 'Epidermal Parasite Screen', '2026-02-14 10:45:00', 'Negative', 'Negative', 'Completed', 'Fur is free of galactic lice.', 11),
+    (14, 15, 14, 'Dental X-Ray (Gap Alignment)', '2026-02-15 15:00:00', '3mm Gap', '2-4mm Gap', 'Completed', 'Gap remains aesthetically pleasing and functional.', 12),
+    (15, 25, 15, 'Flammability Index', '2026-04-08 17:00:00', 'Class A', 'Class C', 'Abnormal', 'Highly combustible; patient must avoid open flames.', 5),
+    (16, 12, 22, 'Bone Density (Cranial)', '2026-04-06 10:00:00', 'Normal', 'Normal', 'Completed', 'No damage from table-kicking incidents.', 23),
+    (17, 19, 25, 'Blood Glucose (Post-Cake)', '2025-11-12 13:00:00', '210 mg/dL', '70-140 mg/dL', 'Abnormal', 'Significant spike following birthday celebration.', 13),
+    (18, 1, 29, 'Cybernetic Nerve Response', '2026-04-20 14:15:00', '12ms', '< 15ms', 'Completed', 'Prosthetic wrist response time is within spec.', 19),
+    (19, 23, 27, 'Tension Compression Test', '2026-03-15 09:00:00', '1500 PSI', '> 1200 PSI', 'Completed', 'Rubber mulch maintains high impact absorption.', 18),
+    (20, 11, 34, 'Biometric Weight Assessment', '2026-04-12 11:30:00', '25 lbs', '< 15 lbs', 'Abnormal', 'Patient is significantly over optimal feline weight.', 13);

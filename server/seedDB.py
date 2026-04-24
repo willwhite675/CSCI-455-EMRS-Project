@@ -39,6 +39,21 @@ def create_default_admin():
             ('dave', hashed_password, 'dave@dave.com', 'Admin')
         )
 
+        cursor.execute(
+            """
+            SELECT accountID FROM useraccount WHERE username = 'dave'
+            """
+        )
+        accountID = cursor.fetchone()[0]
+
+        cursor.execute(
+            """
+            INSERT IGNORE INTO patient (accountID, firstName, lastName, phoneNumber, DOB, gender, insuranceDetails)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (accountID, 'dave', 'dave', '7', '0000-01-01', 'Male', 'dave')
+        )
+
         conn.commit()
         print("Default admin created successfully!")
 
