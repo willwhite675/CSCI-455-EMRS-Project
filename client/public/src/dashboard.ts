@@ -1,0 +1,207 @@
+/*
+* Essentially just a copy of patients.ts but all users can view their own information. The variables that have a 2 in them are just
+* because they are duplicates of the other page and I didn't feel like really changing names so womp womp
+*
+* P.S. I probably should've used classes in all my TypeScript files, but I'm in way too deep now 🥲
+*/
+
+//TODO: Add a way for users to edit their information
+
+declare var $: any;
+
+const accessToken2 = sessionStorage.getItem("access_token");
+const dashboardTitle = document.getElementById("dashboardTitle") as HTMLElement;
+const dashboardContent = document.getElementById("recordInfo") as HTMLElement;
+
+let recentVisitsTable: any = null;
+let billingTable: any = null;
+
+function checkToken2(response: Response) {
+    if (response.status === 401) {
+        sessionStorage.clear();
+        window.location.href = "../login/login.html";
+        throw new Error("Unauthorized");
+    }
+    if (response.status === 403) {
+        alert("You don't have permission to view this page");
+        window.location.href = "../login/login.html";
+        throw new Error("Forbidden");
+    }
+    return response.json();
+}
+
+function loadPatientDashboard() {
+    let patientData: any;
+    let patientAllergiesData: any;
+    let patientMedicalHistoryData: any;
+    let patientVisitsData: any;
+    let patientBillingData: any;
+
+    fetch(`http://localhost:8001/get-self-by-id`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken2}`
+        }
+    })
+        .then(response => checkToken2(response))
+        .then(data => {
+            patientData = data;
+            return fetch(`http://localhost:8001/get-self-allergies`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken2}`
+                }
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            patientAllergiesData = data;
+            return fetch(`http://localhost:8001/get-self-medical-history`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken2}`
+                }
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            patientMedicalHistoryData = data;
+            return fetch(`http://localhost:8001/get-self-visits`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken2}`
+                }
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            patientVisitsData = data;
+            return fetch(`http://localhost:8001/get-self-billing-history`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken2}`
+                }
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            patientBillingData = data;
+        })
+        .then(() => {
+            dashboardTitle.textContent = `Welcome ${patientData.firstName.charAt(0).toUpperCase() + patientData.firstName.slice(1)}!`;
+            dashboardContent.innerHTML = `
+                <div class="record-row">
+                    <div class="record-group">
+                        <h2 class="patientInfoHeader">Patient Info</h2>
+                        <span>
+                            <p><b>Name</b>: ${patientData.firstName} ${patientData.lastName}</p>
+                            <p><b>ID</b>: ${patientData.patientID}</p>
+                            <p><b>Phone Number</b>: ${patientData.phoneNumber}</p>
+                            <p><b>Gender</b>: ${patientData.gender}</p>
+                            <p><b>DOB</b>: ${patientData.DOB}</p>
+                        </span>
+                    </div>
+                    <div class="record-group">
+                        <h2 class="patientInfoHeader">Allergy Profile</h2>
+                        <p>${patientAllergiesData?.allergies?.length > 0 ? patientAllergiesData.allergies.map((a: any[]) => `<p>${a[0]}</p>`).join('') : 'No allergy information'}</p>
+                    </div>
+                </div>
+                <div class="record-row">
+                    <div class="record-group">
+                        <h2 class="patientInfoHeader">Insurance</h2>
+                        <p>${patientData.insuranceDetails || 'No insurance information'}</p>
+                    </div>
+                    <div class="record-group">
+                        <h2 class="patientInfoHeader">Medical History</h2>
+                        <p>${patientMedicalHistoryData?.medicalHistory?.length > 0 ? patientMedicalHistoryData.medicalHistory.map((h: any) => `<p>${h.diagnosis}</p>`).join('') : 'No medical history'}</p>
+                    </div>
+                </div>
+                <div class="record-row">
+                    <div class="record-group">
+                        <h2>Recent Visits</h2>
+                        <table id="recentVisitsTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Purpose</th>
+                                    <th>Doctor</th>
+                                    <th>Walk-in</th>
+                                </tr>
+                            </thead>
+                            <tbody id="visitsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="record-row">
+                    <div class="record-group">
+                        <h2>Billing</h2>
+                        <table id="billingTable">
+                            <thead>
+                                <tr>
+                                    <th>Bill ID</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="billingTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        })
+        .then(() => {
+            const visitsTableBody = document.getElementById("visitsTableBody");
+            const billingTableBody = document.getElementById("billingTableBody");
+
+            patientVisitsData.visits.forEach((visit: any) => {
+                let walkIn = visit.walkIn ? "Yes" : "No";
+                const visitRow = `
+                    <tr>
+                        <td>${visit.visitTimeStamp}</td>
+                        <td>${visit.purpose}</td>
+                        <td>Dr. ${visit.lastName}</td>
+                        <td>${walkIn}</td>
+                    </tr>
+                `;
+                visitsTableBody?.insertAdjacentHTML("beforeend", visitRow);
+            });
+
+            patientBillingData.billingHistory.forEach((bill: any) => {
+                const billRow = `
+                    <tr>
+                        <td>${bill.billingID}</td>
+                        <td>${bill.visitTimeStamp}</td>
+                        <td>${bill.amount}</td>
+                        <td>${bill.status}</td>
+                    </tr>
+                `;
+                billingTableBody?.insertAdjacentHTML("beforeend", billRow);
+            });
+
+            setTimeout(() => {
+                recentVisitsTable = ($('#recentVisitsTable') as any).DataTable();
+                billingTable = ($('#billingTable') as any).DataTable();
+            }, 0);
+        })
+        .catch(error => {
+            console.error("Error loading dashboard:", error);
+            dashboardContent.innerHTML = `<p>Error loading patient information. Please try again later.</p>`;
+        });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (!accessToken2) {
+        window.location.href = "../login/login.html";
+        return;
+    }
+
+    loadPatientDashboard();
+});

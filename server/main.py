@@ -86,8 +86,7 @@ def get_connection():
         port=int(os.getenv("DB_PORT")),
     )
 
-def get_user_from_db(username: str):
-    # Fetch user from database
+def get_user_by_account_id(account_id: int):
     conn = None
     cur = None
     try:
@@ -95,8 +94,8 @@ def get_user_from_db(username: str):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT username, password, email, role FROM useraccount WHERE username = %s",
-            (username.strip(),)
+            "SELECT username, password, email, role FROM useraccount WHERE accountID = %s",
+            (account_id,)
         )
         row = cur.fetchone()
 
@@ -118,8 +117,12 @@ def get_user_from_db(username: str):
 def decode_token(token):
     # This doesn't provide any security at all, but for this project we don't need
     # full JWT validation
-    user = get_user_from_db(token)
-    return user
+    try:
+        account_id = int(token)
+        user = get_user_by_account_id(account_id)
+        return user
+    except (ValueError, TypeError):
+        return None
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     user = decode_token(token)
@@ -215,6 +218,54 @@ async def get_patient_allergies(patientID: str):
         if conn:
             conn.close()
 
+@app.get("/get-self-allergies", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_allergies(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT patientID FROM patient WHERE accountID = (
+                        SELECT accountID FROM useraccount WHERE username = %s
+                    )
+                    """, (current_user.username,))
+        
+        patient_row = cur.fetchone()
+        if not patient_row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient record not found"
+            )
+        
+        patient_id = patient_row[0]
+
+        cur.execute("""
+                    SELECT
+                        allergen
+                    FROM patientallergy
+                    WHERE patientID = %s
+                    """, (patient_id,))
+
+        allergies = cur.fetchall()
+        return {"success": True, "allergies": allergies}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 @app.get("/get-patients", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
 async def get_patients():
     conn = None
@@ -288,7 +339,6 @@ async def get_departments():
 async def read_users_me(
         current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    # Get current user
     return current_user
 
 @app.get("/users/{username}")
@@ -367,7 +417,61 @@ async def get_patient_by_id(accountID: str):
             cur.close()
         if conn:
             conn.close()
+@app.get("/get-self-by-id", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_by_id(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
 
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT accountID FROM useraccount WHERE username = %s",
+            (current_user.username,)
+        )
+        account_row = cur.fetchone()
+        
+        if not account_row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account not found"
+            )
+
+        cur.execute(
+            "SELECT patientID, firstName, lastName, DOB, phoneNumber, gender, insuranceDetails FROM patient WHERE accountID = %s",
+            (account_row[0],)
+        )
+        row = cur.fetchone()
+        
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient not found"
+            )
+            
+        return {
+            "patientID": row[0],
+            "firstName": row[1],
+            "lastName": row[2],
+            "DOB": row[3],
+            "phoneNumber": row[4],
+            "gender": row[5],
+            "insuranceDetails": row[6]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 @app.get("/get-patient-medical-history", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
 async def get_patient_medical_history(patientID: str):
     conn = None
@@ -406,6 +510,44 @@ async def get_patient_medical_history(patientID: str):
         if conn:
             conn.close()
 
+@app.get("/get-self-medical-history", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_medical_history(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT historyID, diagnosis FROM patienthistory WHERE patientID = (SELECT patientID FROM patient WHERE accountID = (SELECT accountID FROM useraccount WHERE username = %s))",
+            (current_user.username,)
+        )
+        rows = cur.fetchall()
+
+        medical_history = [
+            {
+                "historyID": row[0],
+                "diagnosis": row[1]
+            }
+            for row in rows
+        ]
+
+        return {"medicalHistory": medical_history}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 @app.get("/get-patient-visits", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
 async def get_patient_visits(patientID: str):
     conn = None
@@ -418,6 +560,46 @@ async def get_patient_visits(patientID: str):
         cur.execute(
             "SELECT v.visitID, v.providerID, pr.lastName, v.visitTimeStamp, v.purpose, v.walkIn FROM visit v LEFT JOIN healthcareprovider pr ON v.providerID = pr.providerID WHERE v.patientID = %s",
             (patientID.strip(),)
+        )
+        visits = cur.fetchall()
+        visit_list = [
+            {
+                "visitID": row[0],
+                "providerID": row[1],
+                "lastName": row[2],
+                "visitTimeStamp": row[3],
+                "purpose": row[4],
+                "walkIn": row[5]
+            }
+            for row in visits]
+
+        return {"visits": sorted(visit_list, key=lambda x: x["visitTimeStamp"], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-self-visits", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_visits(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT v.visitID, v.providerID, pr.lastName, v.visitTimeStamp, v.purpose, v.walkIn FROM visit v LEFT JOIN healthcareprovider pr ON v.providerID = pr.providerID WHERE v.patientID = (SELECT patientID FROM patient WHERE accountID = (SELECT accountID FROM useraccount WHERE username = %s))",
+            (current_user.username,)
         )
         visits = cur.fetchall()
         visit_list = [
@@ -524,6 +706,63 @@ async def get_patient_billing_history(patientID: str):
         if conn:
             conn.close()
 
+@app.get("/get-self-billing-history", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_billing_history(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT patientID FROM patient WHERE accountID = (
+                SELECT accountID FROM useraccount WHERE username = %s
+            )
+            """, (current_user.username,))
+        
+        patient_row = cur.fetchone()
+        if not patient_row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient record not found"
+            )
+        
+        patient_id = patient_row[0]
+
+        cur.execute(
+            "SELECT b.billingID, b.visitID, b.patientID, b.amount, v.visitTimeStamp, b.status FROM billing b LEFT "
+            "JOIN visit v ON b.visitID = v.visitID WHERE b.patientID = %s",
+            (patient_id,)
+        )
+
+        billing_history = cur.fetchall()
+        billing_list = [
+            {
+                "billingID": billing[0],
+                "visitID": billing[1],
+                "patientID": billing[2],
+                "amount": billing[3],
+                "visitTimeStamp": billing[4],
+                "status": billing[5]
+            }
+            for billing in billing_history
+        ]
+        return {"billingHistory": sorted(billing_list, key=lambda x: x['visitTimeStamp'], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 @app.post("/token")
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     # OAuth2 token login endpoint
@@ -557,9 +796,15 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         # Check if user is an administrator
         is_admin = row[1] == "Admin"
 
-        # For now, using username as token
+        cur.execute(
+            "SELECT accountID FROM useraccount WHERE username = %s",
+            (form_data.username.strip(),)
+        )
+        account_id = cur.fetchone()[0]
+
+        # For now, using account id as token
         return {
-            "access_token": form_data.username.strip(),
+            "access_token": account_id,
             "token_type": "bearer",
             "user_type": row[1],
             "is_admin": is_admin
