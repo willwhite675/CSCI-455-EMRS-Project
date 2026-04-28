@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <ul>
         <a href="../dashboard/dashboard.html" class="sideNavLink">Dashboard</a>
         <a href="../appointments/appointments.html" class="sideNavLink">Appointments</a>
-        <a href="../lab-results/lab-results.html" class="sideNavLink">Lab Results</a>
         <a href="../billing/billing.html" class="sideNavLink">Billing</a>
         <a href="../settings/settings.html" class="sideNavLink">Settings</a>
       </ul>
@@ -20,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
         <a href="../dashboard/dashboard.html" class="sideNavLink">Dashboard</a>
         <a href="../patients/patients.html" class="sideNavLink">Patients</a>
         <a href="../appointments/appointments.html" class="sideNavLink">Appointments</a>
-        <a href="../lab-results/lab-results.html" class="sideNavLink">Lab Results</a>
         <a href="../billing/billing.html" class="sideNavLink">Billing</a>
         <a href="../settings/settings.html" class="sideNavLink">Settings</a>
       </ul>
@@ -36,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
         <a href="../dashboard/dashboard.html" class="sideNavLink">Dashboard</a>
         <a href="../patients/patients.html" class="sideNavLink">Patients</a>
         <a href="../appointments/appointments.html" class="sideNavLink">Appointments</a>
-        <a href="../lab-results/lab-results.html" class="sideNavLink">Lab Results</a>
         <a href="../billing/billing.html" class="sideNavLink">Billing</a>
         <a href="../management-panel/management-panel.html" class="sideNavLink">Management Panel</a>
         <a href="../settings/settings.html" class="sideNavLink">Settings</a>
