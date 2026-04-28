@@ -5,6 +5,7 @@ let patientData;
 let patientDataTable = null;
 let recentPatientVisits = null;
 let recentPatientBilling = null;
+let recentPatientLabResults = null;
 const patientRecordView = document.getElementById("recordInfo");
 let viewRecord = false;
 function getPatients() {
@@ -16,7 +17,7 @@ function getPatients() {
                     <td>${patient.accountID}</td>
                     <td>${patient.lastName}, ${patient.firstName}</td>
                     <td>${patient.gender}</td>
-                    <td>${patient.DOB}</td>
+                    <td>${formatDate(patient.DOB)}</td>
                     <td>${patient.phoneNumber}</td>
                     <td>${patient.email}</td>
                     <td>${patient.insuranceDetails}</td>
@@ -67,6 +68,7 @@ function viewRecordHandler(accountID) {
         let patientMedicalHistoryData;
         let patientVisitsData;
         let patientBillingData;
+        let patientLabResultsData;
         fetch(`http://localhost:8001/get-patient-by-id?accountID=${accountID}`, {
             method: "GET",
             headers: {
@@ -123,6 +125,17 @@ function viewRecordHandler(accountID) {
             .then(response => response.json())
             .then(data => {
             patientBillingData = data;
+            return fetch(`http://localhost:8001/get-patient-lab-results?patientID=${patientData.patientID}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken}`
+                }
+            });
+        })
+            .then(response => response.json())
+            .then(data => {
+            patientLabResultsData = data;
         })
             .then(() => {
             patientRecordView.innerHTML = `
@@ -194,16 +207,36 @@ function viewRecordHandler(accountID) {
                             </table>
                         </div>
                     </div>
+                <div class="record-row">
+                    <div class="record-group">
+                        <h2>Lab Results</h2>
+                        <table id="labResultsTable">
+                            <thead id="labResultsHeader">
+                                <tr id="labResultsLabels">
+                                    <th>Lab ID</th>
+                                    <th>Test Date</th>
+                                    <th>Test Name</th>
+                                    <th>Result</th>
+                                    <th>Range</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="labResultsBody"></tbody>
+                        </table>
+</div>
+</div>
                 `;
         })
             .then(() => {
             const recordTableBody = document.getElementById("recordTableBody");
             const billingBody = document.getElementById("billingBody");
+            const labResultsBody = document.getElementById("labResultsBody");
             patientVisitsData.visits.forEach((visit) => {
                 let walkIn = visit.walkIn ? "Yes" : "No";
                 const visitRow = `
                             <tr>
-                                <td>${visit.visitTimeStamp}</td>
+                                <td>${formatDate(visit.visitTimeStamp)}</td>
                                 <td>${visit.purpose}</td>
                                 <td>Dr. ${visit.lastName}</td>
                                 <td>${walkIn}</td>
@@ -215,17 +248,38 @@ function viewRecordHandler(accountID) {
                 const billRow = `
                             <tr>
                                 <td>${bill.billingID}</td>
-                                <td>${bill.visitTimeStamp}</td>
+                                <td>${formatDate(bill.visitTimeStamp)}</td>
                                 <td>${bill.amount}</td>
                                 <td>${bill.status}</td>
                             </tr>
                         `;
                 billingBody?.insertAdjacentHTML("beforeend", billRow);
             });
+            patientLabResultsData.labResults.forEach((labResult) => {
+                const labResultRow = `
+                            <tr>
+                                <td>${labResult.labResultID}</td>
+                                <td>${formatDate(labResult.testDate)}</td>
+                                <td>${labResult.testName}</td>
+                                <td>${labResult.resultValue}</td>
+                                <td>${labResult.referenceRange}</td>
+                                <td>${labResult.status}</td>
+                                <td>${labResult.notes}</td>
+                            </tr>
+                        `;
+                labResultsBody?.insertAdjacentHTML("beforeend", labResultRow);
+            });
             // Initialize DataTables after a small delay to ensure DOM is fully updated
             setTimeout(() => {
-                recentPatientVisits = $('#recordTable').DataTable();
-                recentPatientBilling = $('#billingTable').DataTable();
+                recentPatientVisits = $('#recordTable').DataTable({
+                    order: [[0, "desc"]],
+                });
+                recentPatientBilling = $('#billingTable').DataTable({
+                    order: [[1, "desc"]],
+                });
+                recentPatientLabResults = $('#labResultsTable').DataTable({
+                    order: [[1, "desc"]],
+                });
             }, 0);
         })
             .catch(error => {
@@ -242,6 +296,9 @@ function backToPatients() {
     const patientTable = document.getElementById("patientsTable_wrapper");
     patientTable.style.display = "table";
     patientRecordView.innerHTML = "";
+}
+function formatDate(dateString) {
+    return new Date(dateString).toISOString().split('T')[0];
 }
 document.addEventListener("DOMContentLoaded", () => {
     if (!accessToken) {

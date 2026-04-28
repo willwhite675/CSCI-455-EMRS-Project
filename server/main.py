@@ -206,7 +206,7 @@ async def get_patient_allergies(patientID: str):
                         allergen
                     FROM patientallergy
                     WHERE patientID = %s
-                    """, (patientID,))
+                    """, (patientID))
 
         allergies = cur.fetchall()
         return {"success": True, "allergies": allergies}
@@ -802,8 +802,8 @@ async def my_labs(current_user: Annotated[User, Depends(get_current_active_user)
         if conn:
             conn.close()
 
-@app.get("/get-labs")
-async def get_labs():
+@app.get("/get-patient-lab-results", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_lab_results(patientID: str):
     conn = None
     cur = None
 
@@ -823,13 +823,14 @@ async def get_labs():
                 l.referenceRange,
                 l.status,
                 l.notes
-             FROM labResult l
-                LEFT JOIN patient p ON l.patientID = p.patientID
-            """
+            FROM labResult l
+                     LEFT JOIN patient p ON l.patientID = p.patientID
+            WHERE l.patientID = %s
+            """, (patientID,)
         )
 
         labs = cur.fetchall()
-        lab_list = [
+        labResults = [
             {
                 "labResultID": row[0],
                 "firstName": row[1],
@@ -844,7 +845,7 @@ async def get_labs():
             for row in labs
         ]
 
-        return lab_list
+        return {"labResults": labResults}
 
     except HTTPException:
         raise
