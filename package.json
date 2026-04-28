@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "tsc --project config/tsconfig.dashboard.json && tsc --project config/tsconfig.login.json && tsc --project config/tsconfig.sideNavBar.json && tsc --project config/tsconfig.appointments.json && tsc --project config/tsconfig.billing.json && tsc --project config/tsconfig.lab-results.json && tsc --project config/tsconfig.patients.json && tsc --project config/tsconfig.settings.json && tsc --project config/tsconfig.topNavBar.json && tsc --project config/tsconfig.router.json && tsc --project config/tsconfig.create-account.json && tsc --project config/tsconfig.management-panel.json && tsc --project config/tsconfig.edit-profile.json",
+    "build": "tsc --project config/tsconfig.dashboard.json && tsc --project config/tsconfig.login.json && tsc --project config/tsconfig.sideNavBar.json && tsc --project config/tsconfig.appointments.json && tsc --project config/tsconfig.billing.json && tsc --project config/tsconfig.patients.json && tsc --project config/tsconfig.settings.json && tsc --project config/tsconfig.topNavBar.json && tsc --project config/tsconfig.router.json && tsc --project config/tsconfig.create-account.json && tsc --project config/tsconfig.management-panel.json && tsc --project config/tsconfig.edit-profile.json",
     "db:setup": "node -e \"console.log('Run the SQL file in db/schema.sql on your local MariaDB instance')\""
   },
   "dependencies": {
