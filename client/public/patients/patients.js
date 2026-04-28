@@ -224,8 +224,8 @@ function viewRecordHandler(accountID) {
                             </thead>
                             <tbody id="labResultsBody"></tbody>
                         </table>
-</div>
-</div>
+                    </div>
+                </div>
                 `;
         })
             .then(() => {

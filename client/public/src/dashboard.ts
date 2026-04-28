@@ -15,6 +15,7 @@ const dashboardContent = document.getElementById("recordInfo") as HTMLElement;
 
 let recentVisitsTable: any = null;
 let billingTable: any = null;
+let labResultsTable: any = null;
 
 function checkToken2(response: Response) {
     if (response.status === 401) {
@@ -36,6 +37,7 @@ function loadPatientDashboard() {
     let patientMedicalHistoryData: any;
     let patientVisitsData: any;
     let patientBillingData: any;
+    let patientLabResultsData: any;
 
     fetch(`http://localhost:8001/get-self-by-id`, {
         method: "GET",
@@ -91,6 +93,17 @@ function loadPatientDashboard() {
         .then(response => response.json())
         .then(data => {
             patientBillingData = data;
+            return fetch(`http://localhost:8001/get-patient-lab-results?patientID=${patientData.patientID}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${accessToken2}`
+                }
+            });
+        })
+        .then(response => response.json())
+        .then(data => {
+            patientLabResultsData = data;
         })
         .then(() => {
             dashboardTitle.textContent = `Welcome ${patientData.firstName.charAt(0).toUpperCase() + patientData.firstName.slice(1)}!`;
@@ -155,17 +168,37 @@ function loadPatientDashboard() {
                         </table>
                     </div>
                 </div>
+                <div class="record-row">
+                    <div class="record-group">
+                        <h2>Lab Results</h2>
+                        <table id="labResultsTable">
+                            <thead id="labResultsHeader">
+                                <tr id="labResultsLabels">
+                                    <th>Lab ID</th>
+                                    <th>Test Date</th>
+                                    <th>Test Name</th>
+                                    <th>Result</th>
+                                    <th>Range</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="labResultsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
             `;
         })
         .then(() => {
             const visitsTableBody = document.getElementById("visitsTableBody");
             const billingTableBody = document.getElementById("billingTableBody");
+            const labResultsBody = document.getElementById("labResultsBody");
 
             patientVisitsData.visits.forEach((visit: any) => {
                 let walkIn = visit.walkIn ? "Yes" : "No";
                 const visitRow = `
                     <tr>
-                        <td>${visit.visitTimeStamp}</td>
+                        <td>${formatDate2(visit.visitTimeStamp)}</td>
                         <td>${visit.purpose}</td>
                         <td>Dr. ${visit.lastName}</td>
                         <td>${walkIn}</td>
@@ -178,23 +211,48 @@ function loadPatientDashboard() {
                 const billRow = `
                     <tr>
                         <td>${bill.billingID}</td>
-                        <td>${bill.visitTimeStamp}</td>
+                        <td>${formatDate2(bill.visitTimeStamp)}</td>
                         <td>${bill.amount}</td>
                         <td>${bill.status}</td>
                     </tr>
                 `;
                 billingTableBody?.insertAdjacentHTML("beforeend", billRow);
             });
+            patientLabResultsData.labResults.forEach((labResult: any) => {
+                const labResultRow = `
+                            <tr>
+                                <td>${labResult.labResultID}</td>
+                                <td>${formatDate2(labResult.testDate)}</td>
+                                <td>${labResult.testName}</td>
+                                <td>${labResult.resultValue}</td>
+                                <td>${labResult.referenceRange}</td>
+                                <td>${labResult.status}</td>
+                                <td>${labResult.notes}</td>
+                            </tr>
+                        `;
+                labResultsBody?.insertAdjacentHTML("beforeend", labResultRow);
+            });
 
             setTimeout(() => {
-                recentVisitsTable = ($('#recentVisitsTable') as any).DataTable();
-                billingTable = ($('#billingTable') as any).DataTable();
+                recentVisitsTable = ($('#recentVisitsTable') as any).DataTable({
+                    order: [[0, "desc"]],
+                });
+                billingTable = ($('#billingTable') as any).DataTable({
+                    order: [[1, "desc"]],
+                });
+                labResultsTable = ($('#labResultsTable') as any).DataTable({
+                    order: [[1, "desc"]],
+                });
             }, 0);
         })
         .catch(error => {
             console.error("Error loading dashboard:", error);
             dashboardContent.innerHTML = `<p>Error loading patient information. Please try again later.</p>`;
         });
+}
+
+function formatDate2(dateString: string): string {
+    return new Date(dateString).toISOString().split('T')[0];
 }
 
 document.addEventListener("DOMContentLoaded", () => {

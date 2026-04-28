@@ -774,7 +774,15 @@ async def my_labs(current_user: Annotated[User, Depends(get_current_active_user)
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT labResultID, testName, resultValue, testDate FROM labResult WHERE patientID = (SELECT patientID FROM patient WHERE accountID = %s)",
+            """SELECT 
+               labResultID,
+                testName,
+                testDate,
+                resultValue,
+                referenceRange,
+                status,
+                notes 
+               FROM labResult WHERE patientID = (SELECT patientID FROM patient WHERE accountID = %s)""",
             (current_user.accountID,)
         )
         labs = cur.fetchall()
@@ -782,12 +790,22 @@ async def my_labs(current_user: Annotated[User, Depends(get_current_active_user)
             {
                 "labResultID": lab[0],
                 "testName": lab[1],
-                "resultValue": lab[2],
-                "testDate": lab[3]
+                "resultValue": lab[3],
+                "testDate": lab[2],
+                "referenceRange": lab[4],
+                "status": lab[5],
+                "notes": lab[6]
             }
             for lab in labs
         ]
         return {"labs": lab_list}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
 
     except HTTPException:
         raise
