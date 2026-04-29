@@ -206,7 +206,7 @@ async def get_patient_allergies(patientID: str):
                         allergen
                     FROM patientallergy
                     WHERE patientID = %s
-                    """, (patientID))
+                    """, (patientID,))
 
         allergies = cur.fetchall()
         return {"success": True, "allergies": allergies}
@@ -629,6 +629,113 @@ async def get_self_visits(current_user: Annotated[User, Depends(get_current_acti
         if conn:
             conn.close()
 
+@app.get("/get-self-appointments", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_appointments(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT 
+                        a.appointmentID, 
+                        a.providerID, 
+                        pr.lastName, 
+                        a.appointmentTimestamp, 
+                        a.reason, 
+                        a.status 
+                    FROM 
+                        appointment a JOIN healthCareProvider pr ON a.providerID = pr.providerID 
+                    WHERE patientID = %s""",
+                    (current_user.accountID,))
+
+        appointments = cur.fetchall()
+        appointment_list = [
+            {
+                "appointmentID": row[0],
+                "providerID": row[1],
+                "doctorName": row[2],
+                "appointmentDate": row[3].strftime("%Y-%m-%d") if row[3] else None,
+                "appointmentTime": row[3].strftime("%H:%M") if row[3] else None,
+                "reason": row[4],
+                "status": row[5]
+            }
+            for row in appointments
+        ]
+
+        return {"appointments": sorted(appointment_list, key=lambda x: x["appointmentDate"] or "", reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-appointments", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_appointments(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT
+                        a.appointmentID,
+                        a.providerID,
+                        pr.lastName,
+                        a.patientID,
+                        pa.firstName,
+                        pa.lastName,
+                        a.appointmentTimestamp,
+                        a.reason,
+                        a.status
+                    FROM
+                        appointment a JOIN healthCareProvider pr ON a.providerID = pr.providerID
+                        JOIN patient pa ON a.patientID = pa.patientID
+                    WHERE a.patientID = %s""",
+                    (patientID,))
+
+        appointments = cur.fetchall()
+        appointment_list = [
+            {
+                "appointmentID": row[0],
+                "providerID": row[1],
+                "providerLastName": row[2],
+                "patientID": row[3],
+                "patientFirstName": row[4],
+                "patientLastName": row[5],
+                "appointmentTimestamp": row[6],
+                "reason": row[7],
+                "status": row[8]
+            }
+            for row in appointments]
+
+        return {"appointments": sorted(appointment_list, key=lambda x: x["appointmentTimestamp"], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
 @app.get("/get-current-account-id")
 async def get_current_account_id(current_user: Annotated[User, Depends(get_current_active_user)]):
     conn = None
@@ -799,13 +906,6 @@ async def my_labs(current_user: Annotated[User, Depends(get_current_active_user)
             for lab in labs
         ]
         return {"labs": lab_list}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Server error: {str(e)}"
-        )
 
     except HTTPException:
         raise

@@ -93,7 +93,7 @@ function loadPatientDashboard() {
         .then(response => response.json())
         .then(data => {
             patientBillingData = data;
-            return fetch(`http://localhost:8001/get-patient-lab-results?patientID=${patientData.patientID}`, {
+            return fetch(`http://localhost:8001/get-my-labs?patientID`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -194,7 +194,7 @@ function loadPatientDashboard() {
             const billingTableBody = document.getElementById("billingTableBody");
             const labResultsBody = document.getElementById("labResultsBody");
 
-            patientVisitsData.visits.forEach((visit: any) => {
+            patientVisitsData?.visits?.forEach((visit: any) => {
                 let walkIn = visit.walkIn ? "Yes" : "No";
                 const visitRow = `
                     <tr>
@@ -207,18 +207,18 @@ function loadPatientDashboard() {
                 visitsTableBody?.insertAdjacentHTML("beforeend", visitRow);
             });
 
-            patientBillingData.billingHistory.forEach((bill: any) => {
+            patientBillingData?.billingHistory?.forEach((bill: any) => {
                 const billRow = `
                     <tr>
                         <td>${bill.billingID}</td>
                         <td>${formatDate2(bill.visitTimeStamp)}</td>
-                        <td>${bill.amount}</td>
+                        <td>$${bill.amount}</td>
                         <td>${bill.status}</td>
                     </tr>
                 `;
                 billingTableBody?.insertAdjacentHTML("beforeend", billRow);
             });
-            patientLabResultsData.labResults.forEach((labResult: any) => {
+            patientLabResultsData?.labs?.forEach((labResult: any) => {
                 const labResultRow = `
                             <tr>
                                 <td>${labResult.labResultID}</td>

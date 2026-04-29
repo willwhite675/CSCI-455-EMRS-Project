@@ -1,0 +1,8 @@
+#appointmentButtons {
+    display: flex;
+    flex-direction: row;
+
+    button {
+        margin-right: 1rem;
+    }
+}

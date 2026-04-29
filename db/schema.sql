@@ -60,22 +60,38 @@ CREATE TABLE IF NOT EXISTS PatientHistory
     FOREIGN KEY (patientID) REFERENCES Patient (patientID) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS Appointment
+(
+    appointmentID        INT PRIMARY KEY AUTO_INCREMENT,
+    patientID            INT NOT NULL,
+    providerID           INT NOT NULL,
+    appointmentTimestamp DATETIME NOT NULL,
+    reason               VARCHAR(255),
+    status               ENUM('Requested', 'Scheduled', 'Completed', 'Cancelled', 'No-Show') NOT NULL DEFAULT 'Scheduled',
+    createdAt            DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patientID) REFERENCES Patient (patientID) ON DELETE CASCADE,
+    FOREIGN KEY (providerID) REFERENCES HealthcareProvider (providerID) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS Visit
 (
     visitID        INT PRIMARY KEY AUTO_INCREMENT,
     patientID      INT NOT NULL,
     providerID     INT NOT NULL,
+    appointmentID  INT,
     visitTimestamp DATETIME NOT NULL,
     purpose        VARCHAR(255) NOT NULL,
     walkIn         BOOLEAN DEFAULT FALSE NOT NULL,
+    diagnoses      TEXT,
     FOREIGN KEY (patientID) REFERENCES Patient (patientID) ON DELETE CASCADE,
-    FOREIGN KEY (providerID) REFERENCES HealthcareProvider (providerID) ON DELETE CASCADE
+    FOREIGN KEY (providerID) REFERENCES HealthcareProvider (providerID) ON DELETE CASCADE,
+    FOREIGN KEY (appointmentID) REFERENCES Appointment (appointmentID) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS Billing
 (
     billingID INT PRIMARY KEY AUTO_INCREMENT,
-    amount    DECIMAL(10,2) NOT NULL,
+    amount    DECIMAL(20,2) NOT NULL,
     status    ENUM('Pending', 'Paid', 'Overdue') NOT NULL DEFAULT 'Pending',
     patientID INT NOT NULL,
     visitID   INT NOT NULL,
@@ -103,7 +119,7 @@ CREATE TABLE IF NOT EXISTS LabResult
 CREATE TABLE IF NOT EXISTS SystemLog
 (
     logID      INT PRIMARY KEY AUTO_INCREMENT,
-    accountID  INT NOT NULL, -- Track by the base account, covers admins/providers/patients
+    accountID  INT NOT NULL,
     action     VARCHAR(255) NOT NULL,
     accessTime DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (accountID) REFERENCES UserAccount (accountID) ON DELETE CASCADE

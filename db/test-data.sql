@@ -10,7 +10,7 @@ INSERT INTO Department (departmentID, departmentName) VALUES
     (4, 'Cybernetic Surgery'),
     (5, 'General Pediatrics');
 
--- 2. User Accounts (IDs shifted down by 1 to start at 1)
+-- 2. User Accounts
 INSERT INTO UserAccount (accountID, username, password, email, twoFactorEnabled, role) VALUES
     (1, 'l_skywalker', '$2b$12$K1H7Xp7v8Y6r9Q2w3E4r5u9I8o7p6a5s4d3f2g1h0j9k8l7m6n5o4', 'luke.skywalker@rebelalliance.org', TRUE, 'Patient'),
     (2, 'princess_leia', '$2b$12$L2I8Yq8w9Z7s0R3x4F5s6v0J9p8q7b6t5e4g3h1i0k9l8m7n6o5p', 'leia.organa@alderaan.gov', FALSE, 'Patient'),
@@ -63,7 +63,7 @@ INSERT INTO UserAccount (accountID, username, password, email, twoFactorEnabled,
     (49, 'compost_pro', '$2b$12$WTdttl5r6U4nz0s162n3q70KZ4W3O2Z1B0C8D7E6F5G4H3I2J1K', 'organic@compost.net', TRUE, 'Provider'),
     (50, 'gravel_path', '$2b$12$XUeuum6s7V5oz1t273o4r81LA5X4P3A2C1D9E8F7G6H5I4J3K2L', 'gravel@pathway.com', FALSE, 'Provider');
 
--- 3. Patients (Mapped accountIDs and extracted insurance)
+-- 3. Patients
 INSERT INTO Patient (patientID, accountID, firstName, lastName, DOB, phoneNumber, gender, insuranceDetails) VALUES
     (1, 1, 'Luke', 'Skywalker', '2003-01-01', '555-0101', 'Male', 'Rebel Alliance Health'),
     (2, 2, 'Leia', 'Organa', '2003-01-01', '555-0102', 'Female', 'Alderaan Royal Care'),
@@ -91,44 +91,85 @@ INSERT INTO Patient (patientID, accountID, firstName, lastName, DOB, phoneNumber
     (24, 24, 'Black', 'Dye', '2025-01-01', '555-0504', 'Female', 'Designer Landscape'),
     (25, 25, 'Straw', 'Bedding', '2025-01-01', '555-0505', 'Male', 'Farmhand Insurance');
 
--- 4. Providers (IDs shifted down, type/specialty added)
+-- 4. Providers
 INSERT INTO HealthcareProvider (providerID, accountID, departmentID, firstName, lastName, providerType, specialty) VALUES
-    -- Emergency & Trauma (Dept 1)
     (1, 26, 1, 'Obi-Wan', 'Kenobi', 'Doctor', 'Disaster Management'),
     (2, 28, 1, 'Mace', 'Windu', 'Doctor', 'Combat Trauma'),
     (3, 39, 1, 'Binky', 'Clown', 'Nurse', 'Triage & Entertainment'),
     (4, 45, 1, 'Dareth', 'Ninja', 'Nurse', 'Holistic First Aid'),
     (5, 50, 1, 'Pea', 'Gravel', 'Nurse', 'Critical Care Recovery'),
-
-    -- Neurology & Mental Health (Dept 2)
     (6, 27, 2, 'Yoda', 'Grandmaster', 'Doctor', 'Cognitive Behavioral Therapy'),
     (7, 30, 2, 'Qui-Gon', 'Jinn', 'Doctor', 'Existential Psychotherapy'),
     (8, 38, 2, 'Lyman', 'N/A', 'Nurse', 'Psychiatric Observation'),
     (9, 41, 2, 'Master', 'Wu', 'Doctor', 'Zen Meditation & Mindfulness'),
     (10, 47, 2, 'Hemlock', 'Red', 'Doctor', 'Neuro-Toxicology'),
-
-    -- Internal Medicine (Dept 3)
     (11, 29, 3, 'Ahsoka', 'Tano', 'Nurse', 'Infectious Diseases'),
     (12, 36, 3, 'Jon', 'Arbuckle', 'Nurse', 'Allergy & Immunology'),
     (13, 40, 3, 'Irma', 'Diner', 'Nurse', 'Gastroenterology & Nutrition'),
     (14, 42, 3, 'Misako', 'Garmadon', 'Doctor', 'Geriatric Care'),
     (15, 48, 3, 'Shredded', 'Oak', 'Nurse', 'Rheumatology'),
-
-    -- Cybernetic Surgery (Dept 4)
     (16, 31, 4, 'Optimus', 'Prime', 'Doctor', 'Structural Re-engineering'),
     (17, 33, 4, 'Ironhide', 'Warrior', 'Nurse', 'Ballistic Prosthetics'),
     (18, 35, 4, 'Ultra', 'Magnus', 'Doctor', 'Orthopedic Integration'),
     (19, 44, 4, 'Cyrus', 'Borg', 'Doctor', 'Neural Interfacing'),
     (20, 46, 4, 'Cocoa', 'Shell', 'Nurse', 'Protective Layering'),
-
-    -- General Pediatrics (Dept 5)
     (21, 32, 5, 'Ratchet', 'Medic', 'Doctor', 'Developmental Mechanics'),
     (22, 34, 5, 'Wheeljack', 'Inventor', 'Doctor', 'Kinetic Growth & Prosthesis'),
     (23, 37, 5, 'Liz', 'Wilson', 'Doctor', 'Feline-Human Hybrid Zoonotics'),
     (24, 43, 5, 'Nya', 'Smith', 'Nurse', 'Hydro-Therapeutic Care'),
     (25, 49, 5, 'Compost', 'Blend', 'Doctor', 'Organic Growth Stimulation');
 
--- 5. Patient History & Allergies (Extracted from Medical Records)
+-- 5. Appointments
+INSERT INTO Appointment (appointmentID, patientID, providerID, appointmentTimestamp, reason, status) VALUES
+    (1, 1, 1, '2026-01-15 08:30:00', 'Post-surgery follow-up', 'Completed'),
+    (2, 6, 21, '2026-04-01 10:45:00', 'Annual maintenance', 'Completed'),
+    (3, 11, 23, '2026-04-07 10:00:00', 'Nutritional consultation', 'Completed'),
+    (4, 20, 9, '2026-04-02 07:45:00', 'Energy calibration', 'Completed'),
+    (5, 2, 6, '2026-03-17 16:30:00', 'Equilibrium check', 'Completed'),
+    (6, 5, 19, '2025-11-30 12:45:00', 'Service maintenance', 'Completed'),
+    (7, 18, 16, '2026-03-30 15:30:00', 'Chassis inspection', 'Completed'),
+    (8, 21, 25, '2026-04-05 09:15:00', 'Condition assessment', 'Completed'),
+    (9, 17, 4, '2026-01-20 11:00:00', 'Mental focus session', 'Completed'),
+    (10, 15, 12, '2026-02-15 13:45:00', 'General checkup', 'Completed'),
+    (11, 1, 7, '2025-12-05 09:45:00', 'Counseling', 'Completed'),
+    (12, 2, 11, '2025-11-20 09:00:00', 'Acute recovery', 'Completed'),
+    (13, 4, 1, '2026-02-01 08:15:00', 'Pain management', 'Completed'),
+    (14, 7, 16, '2026-01-05 12:45:00', 'Post-jump assessment', 'Completed'),
+    (15, 9, 20, '2025-05-12 10:30:00', 'Plating review', 'Completed'),
+    (16, 10, 19, '2026-03-10 13:45:00', 'System sync', 'Completed'),
+    (17, 14, 25, '2026-01-01 09:45:00', 'Stitching repair', 'Completed'),
+    (18, 19, 13, '2025-11-12 11:30:00', 'Dietary review', 'Completed'),
+    (19, 22, 25, '2026-02-10 10:15:00', 'Bark inspection', 'Completed'),
+    (20, 23, 18, '2026-03-15 07:45:00', 'Impact test', 'Completed'),
+    (21, 24, 21, '2026-01-28 11:45:00', 'Dye assessment', 'Completed'),
+    (22, 1, 19, '2026-04-20 13:15:00', 'Cybernetic check', 'Completed'),
+    (23, 3, 1, '2026-04-15 14:45:00', 'Travel clearance', 'Completed'),
+    (24, 5, 20, '2026-03-05 08:45:00', 'Translator check', 'Completed'),
+    (25, 6, 7, '2026-03-20 10:15:00', 'Firmware update', 'Completed'),
+    (26, 8, 22, '2026-04-10 14:00:00', 'Hinge lubrication', 'Completed'),
+    (27, 11, 13, '2026-04-12 10:45:00', 'Weight check', 'Completed'),
+    (28, 17, 9, '2026-02-20 15:45:00', 'Meditation follow-up', 'Completed'),
+    (29, 18, 19, '2026-04-18 08:30:00', 'Processor cooling test', 'Completed'),
+    (30, 20, 2, '2026-04-19 13:45:00', 'Leadership counseling', 'Completed'),
+    (31, 21, 24, '2026-04-21 12:15:00', 'Coating follow-up', 'Completed'),
+    (32, 7, 2, '2026-02-05 09:00:00', 'Impulse control therapy', 'Completed'),
+    (33, 9, 16, '2026-03-01 09:45:00', 'Integrity scan', 'Completed'),
+    (34, 15, 23, '2026-04-02 11:15:00', 'Routine dental', 'Completed'),
+    (35, 10, 1, '2026-04-03 12:45:00', 'First aid training', 'Completed'),
+    (36, 4, 18, '2026-04-04 14:30:00', 'Hydrotherapy', 'Completed'),
+    (37, 2, 7, '2026-04-05 15:45:00', 'PTSD support', 'Completed'),
+    (38, 13, 23, '2026-04-06 08:15:00', 'Kitten checkup', 'Completed'),
+    (39, 12, 13, '2026-04-07 09:30:00', 'Salivary assessment', 'Completed'),
+    (40, 19, 10, '2026-04-08 10:15:00', 'Neurological consult', 'Completed'),
+    (41, 24, 15, '2026-04-09 11:00:00', 'Dietary follow-up', 'Completed'),
+    (42, 5, 6, '2026-04-11 15:30:00', 'Logic resolution', 'Completed'),
+    -- Future Appointments
+    (43, 1, 1, '2026-05-15 10:00:00', 'Cybernetic wrist maintenance', 'Scheduled'),
+    (44, 2, 6, '2026-05-18 14:00:00', 'Mental health follow-up', 'Scheduled'),
+    (45, 11, 23, '2026-05-20 09:00:00', 'Strict dietary weigh-in', 'Scheduled'),
+    (46, 20, 9, '2026-05-22 08:00:00', 'Weekly meditation', 'Scheduled');
+
+# Patient History & Allergies (Extracted from Medical Records)
 INSERT INTO PatientHistory (patientID, diagnosis) VALUES
     (1, 'Hand replacement surgery; history of Force-exhaustion.'),
     (2, 'High stress levels; history of vacuum exposure.'),
@@ -182,57 +223,58 @@ INSERT INTO PatientAllergy (patientID, allergen) VALUES
     (25, 'Fire'),
     (25, 'Dampness');
 
-INSERT INTO Visit (visitID, patientID, providerID, visitTimestamp, purpose, walkIn) VALUES
-    (1, 1, 1, '2026-01-15 09:00:00', 'Follow-up on prosthetic hand sensitivity.', FALSE),
-    (2, 3, 2, '2026-03-22 14:30:00', 'Emergency treatment for residual carbonite blindness.', TRUE),
-    (3, 6, 21, '2026-04-01 11:00:00', 'Voice box calibration and oil change.', FALSE),
-    (4, 11, 23, '2026-04-07 10:15:00', 'Consultation regarding lasagna-induced lethargy.', FALSE),
-    (5, 13, 13, '2025-08-19 16:00:00', 'Treatment for box-related claustrophobia.', TRUE),
-    (6, 20, 9, '2026-04-02 08:00:00', 'Tea therapy for Golden Power exhaustion.', FALSE),
-    (7, 2, 6, '2026-03-17 17:00:00', 'Monitoring of one-legged balance during Hop Scorch ritual.', FALSE),
-    (8, 5, 19, '2025-11-30 13:00:00', 'Lubrication of complaining-related vocal servos.', FALSE),
-    (9, 8, 22, '2026-02-28 12:00:00', 'Dental cleaning for titanium dinosaur teeth.', TRUE),
-    (10, 18, 16, '2026-03-30 15:45:00', 'Coolant leak investigation in chassis.', FALSE),
-    (11, 21, 25, '2026-04-05 09:30:00', 'Check-up for premature decomposition.', FALSE),
-    (12, 17, 4, '2026-01-20 11:30:00', 'Anxiety management regarding Lightning element overload.', FALSE),
-    (13, 4, 11, '2026-02-14 10:00:00', 'Grooming-related skin irritation check.', TRUE),
-    (14, 15, 12, '2026-02-15 14:00:00', 'Gap alignment assessment; request for better cat food.', FALSE),
-    (15, 25, 5, '2026-04-08 16:20:00', 'Fire safety consultation after near-incineration.', TRUE),
-    (16, 1, 7, '2025-12-05 10:00:00', 'Psychological counseling for family-related stress.', FALSE),
-    (17, 2, 11, '2025-11-20 09:15:00', 'Treatment for diplomatic fatigue and space-vacuum exposure.', FALSE),
-    (18, 4, 1, '2026-02-01 08:30:00', 'Chronic back pain management.', FALSE),
-    (19, 7, 16, '2026-01-05 13:00:00', 'Shock absorber replacement after high-altitude jump.', FALSE),
-    (20, 9, 20, '2025-05-12 11:00:00', 'Armor plating reinforcement and dent removal.', FALSE),
-    (21, 10, 19, '2026-03-10 14:00:00', 'Matrix-related stress management.', FALSE),
-    (22, 12, 23, '2026-04-06 09:00:00', 'Post-impact assessment after being kicked off table.', TRUE),
-    (23, 14, 25, '2026-01-01 10:00:00', 'Restorative stitching for internal stuffing loss.', FALSE),
-    (24, 16, 4, '2026-03-25 15:00:00', 'Burn treatment for singed eyebrows.', TRUE),
-    (25, 19, 13, '2025-11-12 11:45:00', 'Gastrointestinal consult for cake-heavy diet.', FALSE),
-    (26, 22, 25, '2026-02-10 10:30:00', 'Anti-termite bark treatment.', FALSE),
-    (27, 23, 18, '2026-03-15 08:00:00', 'Impact resistance testing.', FALSE),
-    (28, 24, 21, '2026-01-28 12:00:00', 'Sun bleaching assessment for black dye.', FALSE),
-    (29, 1, 19, '2026-04-20 13:30:00', 'Cybernetic wrist maintenance.', FALSE),
-    (30, 3, 1, '2026-04-15 15:00:00', 'General checkup after long-distance travel.', FALSE),
-    (31, 5, 20, '2026-03-05 09:00:00', 'Translator circuit cleaning.', FALSE),
-    (32, 6, 7, '2026-03-20 10:30:00', 'Vocal processor firmware update.', FALSE),
-    (33, 8, 22, '2026-04-10 14:15:00', 'Tail hinge lubrication.', FALSE),
-    (34, 11, 13, '2026-04-12 11:00:00', 'Mandatory weight check.', FALSE),
-    (35, 17, 9, '2026-02-20 16:00:00', 'Meditation session for lightning focus.', FALSE),
-    (36, 18, 19, '2026-04-18 08:45:00', 'Processor cooling efficiency test.', FALSE),
-    (37, 20, 2, '2026-04-19 14:00:00', 'Leadership counseling.', FALSE),
-    (38, 21, 24, '2026-04-21 12:30:00', 'UV protection coating application.', FALSE),
-    (39, 7, 2, '2026-02-05 09:15:00', 'Impulse control therapy.', FALSE),
-    (40, 9, 16, '2026-03-01 10:00:00', 'Structural integrity scan.', FALSE),
-    (41, 15, 23, '2026-04-02 11:30:00', 'Routine feline dental cleaning.', FALSE),
-    (42, 10, 1, '2026-04-03 13:00:00', 'First aid training for leadership roles.', FALSE),
-    (43, 4, 18, '2026-04-04 14:45:00', 'Hydrotherapy for joint relief.', FALSE),
-    (44, 2, 7, '2026-04-05 16:00:00', 'PTSD support session.', FALSE),
-    (45, 13, 23, '2026-04-06 08:30:00', 'Kitten developmental checkup.', FALSE),
-    (46, 12, 13, '2026-04-07 09:45:00', 'Salivary gland assessment.', FALSE),
-    (47, 19, 10, '2026-04-08 10:30:00', 'Neurological consult for earth-elemental fatigue.', FALSE),
-    (48, 24, 15, '2026-04-09 11:15:00', 'Dietary consult for pH-balanced mulch.', FALSE),
-    (49, 16, 24, '2026-04-10 13:00:00', 'Treatment for smoke-induced eye irritation.', TRUE),
-    (50, 5, 6, '2026-04-11 15:45:00', 'Existential logic loop resolution.', FALSE);
+-- 6. Visits
+INSERT INTO Visit (visitID, patientID, providerID, appointmentID, visitTimestamp, purpose, walkIn) VALUES
+    (1, 1, 1, 1, '2026-01-15 09:00:00', 'Follow-up on prosthetic hand sensitivity.', FALSE),
+    (2, 3, 2, NULL, '2026-03-22 14:30:00', 'Emergency treatment for residual carbonite blindness.', TRUE),
+    (3, 6, 21, 2, '2026-04-01 11:00:00', 'Voice box calibration and oil change.', FALSE),
+    (4, 11, 23, 3, '2026-04-07 10:15:00', 'Consultation regarding lasagna-induced lethargy.', FALSE),
+    (5, 13, 13, NULL, '2025-08-19 16:00:00', 'Treatment for box-related claustrophobia.', TRUE),
+    (6, 20, 9, 4, '2026-04-02 08:00:00', 'Tea therapy for Golden Power exhaustion.', FALSE),
+    (7, 2, 6, 5, '2026-03-17 17:00:00', 'Monitoring of one-legged balance during Hop Scorch ritual.', FALSE),
+    (8, 5, 19, 6, '2025-11-30 13:00:00', 'Lubrication of complaining-related vocal servos.', FALSE),
+    (9, 8, 22, NULL, '2026-02-28 12:00:00', 'Dental cleaning for titanium dinosaur teeth.', TRUE),
+    (10, 18, 16, 7, '2026-03-30 15:45:00', 'Coolant leak investigation in chassis.', FALSE),
+    (11, 21, 25, 8, '2026-04-05 09:30:00', 'Check-up for premature decomposition.', FALSE),
+    (12, 17, 4, 9, '2026-01-20 11:30:00', 'Anxiety management regarding Lightning element overload.', FALSE),
+    (13, 4, 11, NULL, '2026-02-14 10:00:00', 'Grooming-related skin irritation check.', TRUE),
+    (14, 15, 12, 10, '2026-02-15 14:00:00', 'Gap alignment assessment; request for better cat food.', FALSE),
+    (15, 25, 5, NULL, '2026-04-08 16:20:00', 'Fire safety consultation after near-incineration.', TRUE),
+    (16, 1, 7, 11, '2025-12-05 10:00:00', 'Psychological counseling for family-related stress.', FALSE),
+    (17, 2, 11, 12, '2025-11-20 09:15:00', 'Treatment for diplomatic fatigue and space-vacuum exposure.', FALSE),
+    (18, 4, 1, 13, '2026-02-01 08:30:00', 'Chronic back pain management.', FALSE),
+    (19, 7, 16, 14, '2026-01-05 13:00:00', 'Shock absorber replacement after high-altitude jump.', FALSE),
+    (20, 9, 20, 15, '2025-05-12 11:00:00', 'Armor plating reinforcement and dent removal.', FALSE),
+    (21, 10, 19, 16, '2026-03-10 14:00:00', 'Matrix-related stress management.', FALSE),
+    (22, 12, 23, NULL, '2026-04-06 09:00:00', 'Post-impact assessment after being kicked off table.', TRUE),
+    (23, 14, 25, 17, '2026-01-01 10:00:00', 'Restorative stitching for internal stuffing loss.', FALSE),
+    (24, 16, 4, NULL, '2026-03-25 15:00:00', 'Burn treatment for singed eyebrows.', TRUE),
+    (25, 19, 13, 18, '2025-11-12 11:45:00', 'Gastrointestinal consult for cake-heavy diet.', FALSE),
+    (26, 22, 25, 19, '2026-02-10 10:30:00', 'Anti-termite bark treatment.', FALSE),
+    (27, 23, 18, 20, '2026-03-15 08:00:00', 'Impact resistance testing.', FALSE),
+    (28, 24, 21, 21, '2026-01-28 12:00:00', 'Sun bleaching assessment for black dye.', FALSE),
+    (29, 1, 19, 22, '2026-04-20 13:30:00', 'Cybernetic wrist maintenance.', FALSE),
+    (30, 3, 1, 23, '2026-04-15 15:00:00', 'General checkup after long-distance travel.', FALSE),
+    (31, 5, 20, 24, '2026-03-05 09:00:00', 'Translator circuit cleaning.', FALSE),
+    (32, 6, 7, 25, '2026-03-20 10:30:00', 'Vocal processor firmware update.', FALSE),
+    (33, 8, 22, 26, '2026-04-10 14:15:00', 'Tail hinge lubrication.', FALSE),
+    (34, 11, 13, 27, '2026-04-12 11:00:00', 'Mandatory weight check.', FALSE),
+    (35, 17, 9, 28, '2026-02-20 16:00:00', 'Meditation session for lightning focus.', FALSE),
+    (36, 18, 19, 29, '2026-04-18 08:45:00', 'Processor cooling efficiency test.', FALSE),
+    (37, 20, 2, 30, '2026-04-19 14:00:00', 'Leadership counseling.', FALSE),
+    (38, 21, 24, 31, '2026-04-21 12:30:00', 'UV protection coating application.', FALSE),
+    (39, 7, 2, 32, '2026-02-05 09:15:00', 'Impulse control therapy.', FALSE),
+    (40, 9, 16, 33, '2026-03-01 10:00:00', 'Structural integrity scan.', FALSE),
+    (41, 15, 23, 34, '2026-04-02 11:30:00', 'Routine feline dental cleaning.', FALSE),
+    (42, 10, 1, 35, '2026-04-03 13:00:00', 'First aid training for leadership roles.', FALSE),
+    (43, 4, 18, 36, '2026-04-04 14:45:00', 'Hydrotherapy for joint relief.', FALSE),
+    (44, 2, 7, 37, '2026-04-05 16:00:00', 'PTSD support session.', FALSE),
+    (45, 13, 23, 38, '2026-04-06 08:30:00', 'Kitten developmental checkup.', FALSE),
+    (46, 12, 13, 39, '2026-04-07 09:45:00', 'Salivary gland assessment.', FALSE),
+    (47, 19, 10, 40, '2026-04-08 10:30:00', 'Neurological consult for earth-elemental fatigue.', FALSE),
+    (48, 24, 15, 41, '2026-04-09 11:15:00', 'Dietary consult for pH-balanced mulch.', FALSE),
+    (49, 16, 24, NULL, '2026-04-10 13:00:00', 'Treatment for smoke-induced eye irritation.', TRUE),
+    (50, 5, 6, 42, '2026-04-11 15:45:00', 'Existential logic loop resolution.', FALSE);
 
 INSERT INTO Billing (billingID, amount, status, patientID, visitID) VALUES
     (1, 450.00, 'Paid', 1, 1),

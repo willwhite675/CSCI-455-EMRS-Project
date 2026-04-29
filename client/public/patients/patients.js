@@ -249,7 +249,7 @@ function viewRecordHandler(accountID) {
                             <tr>
                                 <td>${bill.billingID}</td>
                                 <td>${formatDate(bill.visitTimeStamp)}</td>
-                                <td>${bill.amount}</td>
+                                <td>$${bill.amount}</td>
                                 <td>${bill.status}</td>
                             </tr>
                         `;
