@@ -638,29 +638,35 @@ async def get_self_appointments(current_user: Annotated[User, Depends(get_curren
         conn = get_connection()
         cur = conn.cursor()
 
+        cur.execute("SELECT patientID from Patient WHERE accountID = (SELECT accountID FROM useraccount WHERE username = %s)", (current_user.username,))
+
+        patientID = cur.fetchone()[0]
+
         cur.execute("""
-                    SELECT 
-                        a.appointmentID, 
-                        a.providerID, 
-                        pr.lastName, 
-                        a.appointmentTimestamp, 
-                        a.reason, 
-                        a.status 
+                    SELECT
+                        a.appointmentID,
+                        a.providerID,
+                        pr.lastName,
+                        a.patientID,
+                        a.appointmentTimestamp,
+                        a.reason,
+                        a.status
                     FROM 
                         appointment a JOIN healthCareProvider pr ON a.providerID = pr.providerID 
                     WHERE patientID = %s""",
-                    (current_user.accountID,))
+                    (patientID,))
 
         appointments = cur.fetchall()
         appointment_list = [
             {
                 "appointmentID": row[0],
                 "providerID": row[1],
-                "doctorName": row[2],
-                "appointmentDate": row[3].strftime("%Y-%m-%d") if row[3] else None,
-                "appointmentTime": row[3].strftime("%H:%M") if row[3] else None,
-                "reason": row[4],
-                "status": row[5]
+                "providerLastName": row[2],
+                "patientID": row[3],
+                "appointmentDate": row[4].strftime("%Y-%m-%d") if row[4] else None,
+                "appointmentTime": row[4].strftime("%H:%M") if row[4] else None,
+                "reason": row[5],
+                "status": row[6]
             }
             for row in appointments
         ]
@@ -681,7 +687,7 @@ async def get_self_appointments(current_user: Annotated[User, Depends(get_curren
             conn.close()
 
 @app.get("/get-patient-appointments", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
-async def get_patient_appointments(patientID: str):
+async def get_patient_appointments():
     conn = None
     cur = None
 
@@ -703,8 +709,8 @@ async def get_patient_appointments(patientID: str):
                     FROM
                         appointment a JOIN healthCareProvider pr ON a.providerID = pr.providerID
                         JOIN patient pa ON a.patientID = pa.patientID
-                    WHERE a.patientID = %s""",
-                    (patientID,))
+                    """,
+                    )
 
         appointments = cur.fetchall()
         appointment_list = [
@@ -715,13 +721,14 @@ async def get_patient_appointments(patientID: str):
                 "patientID": row[3],
                 "patientFirstName": row[4],
                 "patientLastName": row[5],
-                "appointmentTimestamp": row[6],
+                "appointmentDate": row[6].strftime("%Y-%m-%d") if row[6] else None,
+                "appointmentTime": row[6].strftime("%H:%M") if row[6] else None,
                 "reason": row[7],
                 "status": row[8]
             }
             for row in appointments]
 
-        return {"appointments": sorted(appointment_list, key=lambda x: x["appointmentTimestamp"], reverse=True)}
+        return {"appointments": sorted(appointment_list, key=lambda x: x["appointmentDate"], reverse=True)}
 
     except HTTPException:
         raise
@@ -1131,10 +1138,16 @@ async def add_provider(data: AddProvider):
         firstName = patient_row['firstName']
         lastName = patient_row['lastName']
 
-        cur.execute(
-            "UPDATE useraccount SET role = 'Provider' WHERE accountID = %s",
-            (data.accountID,)
-        )
+        if data.departmentID == 6:
+            cur.execute(
+                "UPDATE useraccount SET role = 'Admin' WHERE accountID = %s",
+                (data.accountID,)
+            )
+        else:
+            cur.execute(
+                "UPDATE useraccount SET role = 'Provider' WHERE accountID = %s",
+                (data.accountID,)
+            )
 
         cur.execute(
             """INSERT INTO healthcareprovider

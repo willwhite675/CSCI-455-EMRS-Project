@@ -1,4 +1,4 @@
-#appointmentButtons {
+.appointmentButtons {
     display: flex;
     flex-direction: row;
 

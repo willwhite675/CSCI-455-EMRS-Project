@@ -14,18 +14,34 @@ function getProviders() {
     const employeeTableBody = document.getElementById("employeeTableBody") as HTMLTableSectionElement;
     if (employeeTableBody) {
         providerData.providers.forEach((provider: any) => {
-            employeeTableBody.innerHTML += `
-                <tr data-account-id="${provider.accountID}">
-                    <td>${provider.lastName}, ${provider.firstName}</td>
-                    <td>${provider.email}</td>
-                    <td>${provider.providerID}</td>
-                    <td>${provider.providerType}</td>
-                    <td>${provider.specialty}</td>
-                    <td>${provider.departmentName}</td>
-                    <td>${provider.departmentID}</td>
-                    <td class="remove-column"><button class="removeButton">Remove</button></td>
-                </tr>
+            if (provider.accountID == sessionStorage.getItem("access_token")) {
+                employeeTableBody.innerHTML += `
+                    <tr data-account-id="${provider.accountID}">
+                        <td>${provider.lastName}, ${provider.firstName}</td>
+                        <td>${provider.email}</td>
+                        <td>${provider.providerID}</td>
+                        <td>${provider.providerType}</td>
+                        <td>${provider.specialty}</td>
+                        <td>${provider.departmentName}</td>
+                        <td>${provider.departmentID}</td>
+                        <td></td>
+                    </tr>
                 `
+            }
+            else {
+                employeeTableBody.innerHTML += `
+                    <tr data-account-id="${provider.accountID}">
+                        <td>${provider.lastName}, ${provider.firstName}</td>
+                        <td>${provider.email}</td>
+                        <td>${provider.providerID}</td>
+                        <td>${provider.providerType}</td>
+                        <td>${provider.specialty}</td>
+                        <td>${provider.departmentName}</td>
+                        <td>${provider.departmentID}</td>
+                        <td class="remove-column"><button class="removeButton">Remove</button></td>
+                    </tr>
+                `
+            }
         })
         providerDataTable = ($('#employeeTable') as any).DataTable();
         attachRemoveButtonListeners();

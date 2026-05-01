@@ -4,6 +4,8 @@ const accessToken3 = sessionStorage.getItem("access_token");
 
 let myAppointmentData: any;
 let myAppointmentDataTable: any;
+let patientAppointmentData: any;
+let patientAppointmentDataTable: any;
 
 function getMyAppointments() {
     const appointmentTableBody = document.getElementById("appointmentTableBody");
@@ -13,7 +15,7 @@ function getMyAppointments() {
             const appointmentRow = `
                 <tr>
                     <td>${appointment.appointmentID}</td>
-                    <td>${appointment.doctorName}</td>
+                    <td>${appointment.providerLastName}</td>
                     <td>${appointment.appointmentDate}</td>
                     <td>${appointment.appointmentTime}</td>
                     <td>${appointment.reason}</td>
@@ -26,13 +28,37 @@ function getMyAppointments() {
     }
 }
 
+function getPatientAppointments() {
+    const patientAppointmentTableBody = document.getElementById("patientAppointmentTableBody");
+    if (patientAppointmentTableBody && patientAppointmentData && patientAppointmentData.appointments) {
+        patientAppointmentTableBody.innerHTML = '';
+        patientAppointmentData.appointments.forEach((appointment: any) => {
+            const appointmentRow = `
+                <tr>
+                    <td>${appointment.appointmentID}</td>
+                    <td>${appointment.patientFirstName}</td>
+                    <td>${appointment.providerLastName}</td>
+                    <td>${appointment.appointmentDate}</td>
+                    <td>${appointment.appointmentTime}</td>
+                    <td>${appointment.reason}</td>
+                    <td>${appointment.status}</td>
+                </tr>
+            `;
+            patientAppointmentTableBody.innerHTML += appointmentRow;
+        })
+        patientAppointmentDataTable = ($('#patientAppointmentTable') as any).DataTable({
+            "order": [[3, "desc"]]
+        });
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     const userType = sessionStorage.getItem("userType");
     let appointMentHTML = '';
 
     if (userType === "Patient") {
         appointMentHTML = `
-            <div id="appointmentButtons">
+            <div class="appointmentButtons">
                 <button class="standardButton">Schedule Appointment</button>
                 <button class="standardButton">Requested Appointments</button>
             </div>
@@ -65,8 +91,12 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(error => {
                 console.error('Error fetching appointments:', error);
             });
-    } else if (userType === "Provider") {
+    } else if (userType === "Provider" || userType === "Admin") {
         appointMentHTML = `
+            <div class="appointmentButtons">
+                <button class="standardButton">Schedule Appointment</button>
+                <button class="standardButton">Requested Appointments</button>
+            </div>
             <table id="patientAppointmentTable">
                 <thead>
                     <tr>
@@ -82,12 +112,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 <tbody id="patientAppointmentTableBody"></tbody>
             </table>
     `;
-    }
-
-    if (userType === "Admin") {
-        appointMentHTML = `
-        
-    `;
+        fetch(`http://localhost:8001/get-patient-appointments`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken3}`
+            }
+        })
+            .then(data => data.json())
+            .then(data => {
+                patientAppointmentData = data;
+                getPatientAppointments();
+            })
+        .catch(error => {
+            console.error('Error fetching appointments:', error);
+        });
     }
 
     const appointments = document.getElementById('appointmentContainer')

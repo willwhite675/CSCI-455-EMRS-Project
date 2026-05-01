@@ -30,12 +30,12 @@ def create_default_admin():
         cursor.execute("SELECT departmentID FROM Department WHERE departmentName = 'System Administration'")
         dept_id = cursor.fetchone()[0]
 
-        provider_pass = hash_password("dave")
+        provider_pass = hash_password("Dave")
         cursor.execute(
             "INSERT IGNORE INTO UserAccount (username, password, email, role) VALUES (?, ?, ?, ?)",
-            ('dave', provider_pass, 'dave@dave.com', 'Admin')
+            ('Dave', provider_pass, 'dave@dave.com', 'Dave')
         )
-        cursor.execute("SELECT accountID FROM UserAccount WHERE username = 'dave'")
+        cursor.execute("SELECT accountID FROM UserAccount WHERE username = 'Dave'")
         prov_account_id = cursor.fetchone()[0]
 
         cursor.execute(
@@ -43,21 +43,21 @@ def create_default_admin():
             INSERT IGNORE INTO HealthcareProvider (accountID, departmentID, firstName, lastName, providerType, specialty)
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (prov_account_id, dept_id, 'dave', 'dave', 'Doctor', 'dave')
+            (prov_account_id, dept_id, 'Dave', 'Dave', 'Doctor', 'Dave')
         )
         cursor.execute("SELECT providerID FROM HealthcareProvider WHERE accountID = ?", (prov_account_id,))
         provider_id = cursor.fetchone()[0]
 
         # Admin and Patient
-        password = "dave"
+        password = "Dave"
         hashed_password = hash_password(password)
 
         cursor.execute(
             "INSERT IGNORE INTO UserAccount (username, password, email, role) VALUES (?, ?, ?, ?)",
-            ('dave', hashed_password, 'dave@dave.com', 'Admin')
+            ('Dave', hashed_password, 'dave@dave.com', 'Admin')
         )
 
-        cursor.execute("SELECT accountID FROM UserAccount WHERE username = 'dave'")
+        cursor.execute("SELECT accountID FROM UserAccount WHERE username = 'Dave'")
         accountID = cursor.fetchone()[0]
 
         cursor.execute(
@@ -65,7 +65,7 @@ def create_default_admin():
             INSERT IGNORE INTO Patient (accountID, firstName, lastName, phoneNumber, DOB, gender, insuranceDetails)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (accountID, 'Dave', 'Admin', '67', '0000-01-01', 'Male', 'dave')
+            (accountID, 'Dave', 'Admin', '67', '0000-01-01', 'Male', 'Dave')
         )
 
         cursor.execute("SELECT patientID FROM Patient WHERE accountID = ?", (accountID,))
