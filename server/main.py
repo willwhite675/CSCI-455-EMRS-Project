@@ -1,11 +1,12 @@
 from typing import Annotated, List
+from datetime import date
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import mariadb
 import os
 from dotenv import load_dotenv
-from security import hash_password, verify_password
+from .authUtils import hash_password, verify_password
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 app = FastAPI()
@@ -33,7 +34,7 @@ class RoleChecker:
 
     def __call__(self, user: User = Depends(get_current_active_user)):
         # Check if the user's role is in the allowed list
-        if user.userType not in self.allowed_roles:
+        if user.role not in self.allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Operation not permitted"
@@ -46,10 +47,9 @@ class Login(BaseModel):
 class User(BaseModel):
     username: str
     email: str | None = None
-    firstName: str | None = None
-    lastName: str | None = None
     disabled: bool | None = None
-    userType: str | None = None
+    role: str | None = None
+    accountID: int | None = None
 
 class UserInDB(User):
     hashed_password: str
@@ -60,21 +60,55 @@ class CreateAccount(BaseModel):
     firstName: str
     lastName: str
     phoneNumber: str
-    age: int
+    DOB: date
     gender: str
     email: str
-    userType: str
+    role: str
+    insuranceDetails: str
 
 class AddProvider(BaseModel):
-    employeeID: str
-    providerID: str
-    departmentID: str
+    accountID: int
+    departmentID: int
+    providerType: str
+    specialty: str
 
 class AddPatient(BaseModel):
     username: str
 
 class RemoveProvider(BaseModel):
-    username: str
+    accountID: int
+
+class UpdateSelfInfo(BaseModel):
+    firstName: str
+    lastName: str
+    email: str
+    phoneNumber: str
+    gender: str
+    insuranceDetails: str
+
+class UpdateSelfPassword(BaseModel):
+    currentPassword: str
+    newPassword: str
+
+class AddPatientAllergy(BaseModel):
+    patientID: int
+    allergen: str
+
+class DeletePatientAllergy(BaseModel):
+    allergyID: int
+
+class AddPatientMedicalHistory(BaseModel):
+    patientID: int
+    diagnosis: str
+
+class DeletePatientMedicalHistory(BaseModel):
+    historyID: int
+
+class ScheduleAppointment(BaseModel):
+    reason: str
+    department: str
+    appointmentDate: str
+    appointmentTime: str
 
 def get_connection():
     return mariadb.connect(
@@ -85,8 +119,7 @@ def get_connection():
         port=int(os.getenv("DB_PORT")),
     )
 
-def get_user_from_db(username: str):
-    # Fetch user from database
+def get_user_by_account_id(account_id: int):
     conn = None
     cur = None
     try:
@@ -94,8 +127,8 @@ def get_user_from_db(username: str):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT ID, authCredentials, firstName, lastName, email, userType FROM user WHERE ID = ?",
-            (username.strip(),)
+            "SELECT username, password, email, role FROM useraccount WHERE accountID = %s",
+            (account_id,)
         )
         row = cur.fetchone()
 
@@ -103,10 +136,9 @@ def get_user_from_db(username: str):
             return UserInDB(
                 username=row[0],
                 hashed_password=row[1],
-                firstName=row[2],
-                lastName=row[3],
-                email=row[4],
-                userType=row[5],
+                email=row[2],
+                role=row[3],
+                accountID=account_id,
                 disabled=False
             )
         return None
@@ -119,8 +151,12 @@ def get_user_from_db(username: str):
 def decode_token(token):
     # This doesn't provide any security at all, but for this project we don't need
     # full JWT validation
-    user = get_user_from_db(token)
-    return user
+    try:
+        account_id = int(token)
+        user = get_user_by_account_id(account_id)
+        return user
+    except (ValueError, TypeError):
+        return None
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
     user = decode_token(token)
@@ -143,35 +179,123 @@ async def get_providers():
 
         cur.execute("""
                     SELECT
-                        hp.ID,
-                        u.firstName,
-                        u.lastName,
-                        u.email,
                         hp.providerID,
+                        hp.firstName,
+                        hp.lastName,
+                        u.email,
+                        hp.accountID,
+                        hp.providerType,
+                        hp.specialty,
                         hp.departmentID,
                         d.departmentName
                     FROM healthcareprovider hp
-                        LEFT JOIN user u ON hp.ID = u.ID
-                        LEFT JOIN department d ON hp.departmentID = d.departmentID
+                             LEFT JOIN useraccount u ON hp.accountID = u.accountID
+                             LEFT JOIN department d ON hp.departmentID = d.departmentID
                     """)
         providers = cur.fetchall()
         provider_list = [
             {
-                "ID": row[0],
+                "providerID": row[0],
                 "firstName": row[1],
                 "lastName": row[2],
                 "email": row[3],
-                "providerID": row[4],
-                "departmentID": row[5],
-                "departmentName": row[6]
+                "accountID": row[4],
+                "providerType": row[5],
+                "specialty": row[6],
+                "departmentID": row[7],
+                "departmentName": row[8]
             }
             for row in providers
         ]
 
         return {"providers": sorted(provider_list, key=lambda x: x["firstName"])}
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-allergies", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_allergies(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT
+                        allergyID,
+                        allergen
+                    FROM patientallergy
+                    WHERE patientID = %s
+                    """, (patientID,))
+
+        rows = cur.fetchall()
+        allergies = [{"allergyID": row[0], "allergen": row[1]} for row in rows]
+        return {"success": True, "allergies": allergies}
+
     except Exception as e:
         return {"success": False, "message": f"Server error: {str(e)}"}
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-self-allergies", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_allergies(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT patientID FROM patient WHERE accountID = %s
+
+                    """, (current_user.accountID,))
+
+        patient_row = cur.fetchone()
+        if not patient_row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient record not found"
+            )
+
+        patient_id = patient_row[0]
+
+        cur.execute("""
+                    SELECT
+                        allergyID,
+                        allergen
+                    FROM patientallergy
+                    WHERE patientID = %s
+                    """, (patient_id,))
+
+        rows = cur.fetchall()
+        allergies = [{"allergyID": row[0], "allergen": row[1]} for row in rows]
+        return {"success": True, "allergies": allergies}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
 
     finally:
         if cur:
@@ -190,26 +314,28 @@ async def get_patients():
 
         cur.execute("""
                     SELECT
-                        p.ID,
-                        u.firstName,
-                        u.lastName,
+                        p.accountID,
+                        p.firstName,
+                        p.lastName,
+                        p.gender,
+                        p.DOB,
+                        p.phoneNumber,
                         u.email,
-                        p.allergyProfile,
-                        p.insuranceDetails,
-                        p.lastVisit
+                        p.insuranceDetails
                     FROM patient p
-                             LEFT JOIN user u ON p.ID = u.ID
+                             LEFT JOIN useraccount u ON p.accountID = u.accountID
                     """)
         patients = cur.fetchall()
         patient_list = [
             {
-                "ID": row[0],
+                "accountID": row[0],
                 "firstName": row[1],
                 "lastName": row[2],
-                "email": row[3],
-                "allergyProfile": row[4],
-                "insuranceDetails": row[5],
-                "lastVisit": row[6]
+                "gender": row[3],
+                "DOB": row[4],
+                "phoneNumber": row[5],
+                "email": row[6],
+                "insuranceDetails": row[7]
             }
             for row in patients]
 
@@ -224,7 +350,7 @@ async def get_patients():
         if conn:
             conn.close()
 
-@app.get("/get-departments", dependencies=[Depends(RoleChecker(["Admin"]))])
+@app.get("/get-departments", dependencies=[Depends(RoleChecker(["Patient", "Doctor", "Admin"]))])
 async def get_departments():
     conn = None
     cur = None
@@ -250,7 +376,6 @@ async def get_departments():
 async def read_users_me(
         current_user: Annotated[User, Depends(get_current_active_user)],
 ):
-    # Get current user
     return current_user
 
 @app.get("/users/{username}")
@@ -263,11 +388,638 @@ async def get_record(username: str):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT * FROM user WHERE username = ?",
+            "SELECT username, email, role FROM useraccount WHERE username = %s",
             (username.strip(),)
         )
         row = cur.fetchone()
 
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        return {"username": row[0], "email": row[1], "role": row[2]}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-by-id", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_by_id(accountID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT patientID, firstName, lastName, DOB, phoneNumber, gender, insuranceDetails FROM patient WHERE accountID = %s",
+            (accountID.strip(),)
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient not found"
+            )
+        return {
+            "patientID": row[0],
+            "firstName": row[1],
+            "lastName": row[2],
+            "DOB": row[3],
+            "phoneNumber": row[4],
+            "gender": row[5],
+            "insuranceDetails": row[6]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+@app.get("/get-self-by-id", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_by_id(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT accountID FROM useraccount WHERE username = %s",
+            (current_user.username,)
+        )
+        account_row = cur.fetchone()
+
+        if not account_row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account not found"
+            )
+
+        cur.execute(
+            "SELECT patientID, firstName, lastName, DOB, phoneNumber, gender, insuranceDetails FROM patient WHERE accountID = %s",
+            (account_row[0],)
+        )
+        row = cur.fetchone()
+
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient not found"
+            )
+
+        return {
+            "patientID": row[0],
+            "firstName": row[1],
+            "lastName": row[2],
+            "DOB": row[3],
+            "phoneNumber": row[4],
+            "gender": row[5],
+            "insuranceDetails": row[6]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+@app.get("/get-patient-medical-history", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_medical_history(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT historyID, diagnosis FROM patienthistory WHERE patientID = %s",
+            (patientID.strip(),)
+        )
+        rows = cur.fetchall()
+
+        medical_history = [
+            {
+                "historyID": row[0],
+                "diagnosis": row[1]
+            }
+            for row in rows
+        ]
+
+        return {"medicalHistory": medical_history}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-self-medical-history", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_medical_history(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT historyID, diagnosis FROM patienthistory WHERE patientID = (SELECT patientID FROM patient WHERE accountID = %s)",
+            (current_user.accountID,)
+        )
+        rows = cur.fetchall()
+
+        medical_history = [
+            {
+                "historyID": row[0],
+                "diagnosis": row[1]
+            }
+            for row in rows
+        ]
+
+        return {"medicalHistory": medical_history}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-visits", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_visits(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT v.visitID, v.providerID, pr.lastName, v.visitTimeStamp, v.purpose, v.walkIn FROM visit v LEFT JOIN healthcareprovider pr ON v.providerID = pr.providerID WHERE v.patientID = %s",
+            (patientID.strip(),)
+        )
+        visits = cur.fetchall()
+        visit_list = [
+            {
+                "visitID": row[0],
+                "providerID": row[1],
+                "lastName": row[2],
+                "visitTimeStamp": row[3],
+                "purpose": row[4],
+                "walkIn": row[5]
+            }
+            for row in visits]
+
+        return {"visits": sorted(visit_list, key=lambda x: x["visitTimeStamp"], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-self-visits", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_visits(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT v.visitID, v.providerID, pr.lastName, v.visitTimeStamp, v.purpose, v.walkIn FROM visit v LEFT JOIN healthcareprovider pr ON v.providerID = pr.providerID WHERE v.patientID = (SELECT patientID FROM patient WHERE accountID = %s)",
+            (current_user.accountID,)
+        )
+        visits = cur.fetchall()
+        visit_list = [
+            {
+                "visitID": row[0],
+                "providerID": row[1],
+                "lastName": row[2],
+                "visitTimeStamp": row[3],
+                "purpose": row[4],
+                "walkIn": row[5]
+            }
+            for row in visits]
+
+        return {"visits": sorted(visit_list, key=lambda x: x["visitTimeStamp"], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-self-appointments", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_appointments(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT patientID FROM patient WHERE accountID = %s
+                    """, (current_user.accountID,))
+
+        patient_row = cur.fetchone()
+        if not patient_row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient record not found"
+            )
+
+        patient_id = patient_row[0]
+
+        cur.execute("""
+                    SELECT
+                        a.appointmentID,
+                        a.providerID,
+                        pr.lastName,
+                        a.appointmentTimestamp,
+                        a.reason,
+                        a.status
+                    FROM
+                        appointment a JOIN healthCareProvider pr ON a.providerID = pr.providerID
+                    WHERE a.patientID = %s""",
+                    (patient_id,))
+
+        appointments = cur.fetchall()
+        appointment_list = [
+            {
+                "appointmentID": row[0],
+                "providerID": row[1],
+                "providerLastName": row[2],
+                "appointmentDate": row[3].date().strftime("%Y-%m-%d") if row[3] else None,
+                "appointmentTime": row[3].time().strftime("%H:%M") if row[3] else None,
+                "reason": row[4],
+                "status": row[5]
+            }
+            for row in appointments
+        ]
+
+        return {"appointments": sorted(appointment_list, key=lambda x: x["appointmentDate"] or "", reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-appointments", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_appointments():
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT
+                        a.appointmentID,
+                        a.providerID,
+                        pr.lastName,
+                        a.patientID,
+                        pa.firstName,
+                        pa.lastName,
+                        a.appointmentTimestamp,
+                        a.reason,
+                        a.status
+                    FROM
+                        appointment a JOIN healthCareProvider pr ON a.providerID = pr.providerID
+                                      JOIN patient pa ON a.patientID = pa.patientID""")
+
+        appointments = cur.fetchall()
+        appointment_list = [
+            {
+                "appointmentID": row[0],
+                "providerID": row[1],
+                "providerLastName": row[2],
+                "patientID": row[3],
+                "patientFirstName": row[4],
+                "patientLastName": row[5],
+                "appointmentDate": row[6].date().strftime("%Y-%m-%d") if row[6] else None,
+                "appointmentTime": row[6].time().strftime("%H:%M") if row[6] else None,
+                "reason": row[7],
+                "status": row[8]
+            }
+            for row in appointments]
+
+        return {"appointments": sorted(appointment_list, key=lambda x: x["appointmentDate"] or "", reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-current-account-id")
+async def get_current_account_id(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT accountID FROM useraccount WHERE username = %s",
+            (current_user.username,)
+        )
+        row = cur.fetchone()
+
+        if not row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account not found"
+            )
+
+        return {"accountID": row[0]}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-billing-history", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_billing_history(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT b.billingID, b.visitID, b.patientID, b.amount, v.visitTimeStamp, b.status FROM billing b LEFT "
+            "JOIN visit v ON b.visitID = v.visitID WHERE b.patientID = %s",
+            (patientID.strip(),)
+        )
+
+        billing_history = cur.fetchall()
+        billing_list = [
+            {
+                "billingID": billing[0],
+                "visitID": billing[1],
+                "patientID": billing[2],
+                "amount": billing[3],
+                "visitTimeStamp": billing[4],
+                "status": billing[5]
+            }
+            for billing in billing_history
+        ]
+        return {"billingHistory": sorted(billing_list, key=lambda x: x['visitTimeStamp'], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-self-billing-history", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def get_self_billing_history(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+                    SELECT patientID FROM patient WHERE accountID = (
+                        SELECT accountID FROM useraccount WHERE username = %s
+                    )
+                    """, (current_user.username,))
+
+        patient_row = cur.fetchone()
+        if not patient_row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient record not found"
+            )
+
+        patient_id = patient_row[0]
+
+        cur.execute(
+            "SELECT b.billingID, b.visitID, b.patientID, b.amount, v.visitTimeStamp, b.status FROM billing b LEFT "
+            "JOIN visit v ON b.visitID = v.visitID WHERE b.patientID = %s",
+            (patient_id,)
+        )
+
+        billing_history = cur.fetchall()
+        billing_list = [
+            {
+                "billingID": billing[0],
+                "visitID": billing[1],
+                "patientID": billing[2],
+                "amount": billing[3],
+                "visitTimeStamp": billing[4],
+                "status": billing[5]
+            }
+            for billing in billing_history
+        ]
+        return {"billingHistory": sorted(billing_list, key=lambda x: x['visitTimeStamp'], reverse=True)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-my-labs", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def my_labs(current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            """SELECT
+                   labResultID,
+                   testName,
+                   testDate,
+                   resultValue,
+                   referenceRange,
+                   status,
+                   notes
+               FROM labResult WHERE patientID = (SELECT patientID FROM patient WHERE accountID = %s)""",
+            (current_user.accountID,)
+        )
+        labs = cur.fetchall()
+        lab_list = [
+            {
+                "labResultID": lab[0],
+                "testName": lab[1],
+                "resultValue": lab[3],
+                "testDate": lab[2],
+                "referenceRange": lab[4],
+                "status": lab[5],
+                "notes": lab[6]
+            }
+            for lab in labs
+        ]
+        return {"labs": lab_list}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.get("/get-patient-lab-results", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def get_patient_lab_results(patientID: str):
+    conn = None
+    cur = None
+
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            SELECT
+                l.labResultID,
+                p.firstName,
+                p.lastName,
+                l.testName,
+                l.testDate,
+                l.resultValue,
+                l.referenceRange,
+                l.status,
+                l.notes
+            FROM labResult l
+                     LEFT JOIN patient p ON l.patientID = p.patientID
+            WHERE l.patientID = %s
+            """, (patientID,)
+        )
+
+        labs = cur.fetchall()
+        labResults = [
+            {
+                "labResultID": row[0],
+                "firstName": row[1],
+                "lastName": row[2],
+                "testName": row[3],
+                "testDate": row[4],
+                "resultValue": row[5],
+                "referenceRange": row[6],
+                "status": row[7],
+                "notes": row[8]
+            }
+            for row in labs
+        ]
+
+        return {"labResults": labResults}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
     finally:
         if cur:
             cur.close()
@@ -285,7 +1037,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT authCredentials, userType FROM user WHERE id = ?",
+            "SELECT password, role FROM useraccount WHERE username = %s",
             (form_data.username.strip(),)
         )
         row = cur.fetchone()
@@ -307,9 +1059,15 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
         # Check if user is an administrator
         is_admin = row[1] == "Admin"
 
-        # For now, using username as token
+        cur.execute(
+            "SELECT accountID FROM useraccount WHERE username = %s",
+            (form_data.username.strip(),)
+        )
+        account_id = cur.fetchone()[0]
+
+        # For now, using account id as token
         return {
-            "access_token": form_data.username.strip(),
+            "access_token": account_id,
             "token_type": "bearer",
             "user_type": row[1],
             "is_admin": is_admin
@@ -336,12 +1094,12 @@ async def create_account(data: CreateAccount):
 
     try:
         conn = get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(dictionary=True)
 
         hashed_password = hash_password(data.password.strip())
 
         cur.execute(
-            "SELECT ID FROM user WHERE ID = ?",
+            "SELECT username FROM useraccount WHERE username = %s",
             (data.username.strip(),)
         )
         user_row = cur.fetchone()
@@ -349,24 +1107,43 @@ async def create_account(data: CreateAccount):
             raise HTTPException(status_code=400, detail="User already exists")
 
         cur.execute(
-            "INSERT INTO user (ID, authCredentials, firstName, lastName, phonenumber, age, gender, email, twoFactorEnabled, userType) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (data.username.strip(), hashed_password, data.firstName.strip(), data.lastName.strip(), data.phoneNumber.strip(), data.age, data.gender.strip(), data.email.strip(), False, data.userType.strip())
+            "INSERT INTO useraccount (username, password, email, twoFactorEnabled, role) VALUES (?, ?, ?, ?, ?)",
+            (data.username.strip(), hashed_password, data.email.strip(), False, data.role.strip())
+        )
+
+        cur.execute("SELECT LAST_INSERT_ID() AS accountID FROM useraccount")
+        accountIDRow = cur.fetchone()
+        if accountIDRow is None:
+            raise HTTPException(status_code=500, detail="Failed to retrieve account ID")
+        accountID = accountIDRow['accountID']
+
+        cur.execute(
+            """
+            INSERT INTO patient (
+                accountID, firstName, lastName, DOB, phoneNumber, gender, insuranceDetails
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (accountID, data.firstName.strip(), data.lastName.strip(), data.DOB, data.phoneNumber.strip(), data.gender.strip(), data.insuranceDetails.strip())
         )
         conn.commit()
 
         if cur.rowcount > 0:
             return {"success": True, "message": "Account created successfully"}
-        else:
-            return {"success": False, "message": "Failed to create account"}
 
+    except HTTPException:
+        raise
     except Exception as e:
-        return {"success": False, "message": f"Server error: {str(e)}"}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
 
     finally:
         if cur:
             cur.close()
         if conn:
             conn.close()
+
 
 @app.post("/add-provider", dependencies=[Depends(RoleChecker(["Admin"]))])
 async def add_provider(data: AddProvider):
@@ -375,39 +1152,59 @@ async def add_provider(data: AddProvider):
 
     try:
         conn = get_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(dictionary=True)
 
-        if data.employeeID.strip() == "" or data.providerID.strip() == "" or data.departmentID.strip() == "":
-            raise HTTPException(status_code=400, detail="Username, Provider ID, and department ID cannot be empty")
+        cur.execute("SELECT departmentID FROM department WHERE departmentID = %s", (data.departmentID,))
+        department_row = cur.fetchone()
 
-        if data.departmentID.strip() not in ["1", "2", "3", "4", "5"]:
+        if department_row is None:
             raise HTTPException(status_code=400, detail="Invalid department ID")
 
         cur.execute(
-            "SELECT ID FROM healthcareprovider WHERE ID = ?",
-            (data.employeeID.strip(),)
+            "SELECT accountID FROM healthcareprovider WHERE accountID = %s",
+            (data.accountID,)
         )
         provider_row = cur.fetchone()
         if provider_row is not None:
-            raise HTTPException(status_code=400, detail="Employee already exists")
+            raise HTTPException(status_code=400, detail="Employee already exists as a provider")
 
         cur.execute(
-            "UPDATE user SET userType = 'Provider' WHERE ID = ?",
-            (data.employeeID.strip(),)
+            "SELECT firstName, lastName FROM patient WHERE accountID = %s",
+            (data.accountID,)
+        )
+        patient_row = cur.fetchone()
+        if patient_row is None:
+            raise HTTPException(status_code=400, detail="Patient/Account does not exist")
+
+        firstName = patient_row['firstName']
+        lastName = patient_row['lastName']
+
+        cur.execute(
+            "UPDATE useraccount SET role = 'Provider' WHERE accountID = %s",
+            (data.accountID,)
         )
 
         cur.execute(
-            "INSERT INTO healthcareprovider (ID, providerID, departmentID) VALUES (?, ?, ?)",
-            (data.employeeID.strip(), data.providerID.strip(), data.departmentID.strip())
+            """INSERT INTO healthcareprovider
+                   (accountID, departmentID, firstName, lastName, providerType, specialty)
+               VALUES (%s, %s, %s, %s, %s, %s)""",
+            (data.accountID, data.departmentID, firstName, lastName,
+             data.providerType, data.specialty)
         )
 
         conn.commit()
 
-        if cur.rowcount > 0:
-            return {"success": True, "message": "Provider added successfully"}
-        else:
-            return {"success": False, "message": "Failed to add provider"}
+        return {"success": True, "message": f"Provider {firstName} {lastName} added successfully"}
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
     finally:
         if cur:
             cur.close()
@@ -454,30 +1251,370 @@ async def remove_provider(data: RemoveProvider):
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT ID FROM healthcareprovider WHERE ID = ?",
-            (data.username.strip(),)
+            "SELECT accountID FROM healthcareprovider WHERE accountID = %s",
+            (data.accountID,)
         )
         provider_row = cur.fetchone()
         if provider_row is None:
             raise HTTPException(status_code=404, detail="Provider not found")
 
         cur.execute(
-            "UPDATE user SET disabled = True WHERE ID = ?",
-            (data.username.strip(),)
+            "DELETE FROM healthcareprovider WHERE accountID = %s",
+            (data.accountID,)
         )
         cur.execute(
-            "DELETE FROM healthcareprovider WHERE ID = ?",
-            (data.username.strip(),)
-        )
-        cur.execute(
-            "UPDATE user SET userType = 'Patient' WHERE ID = ?",
-            (data.username.strip(),)
+            "UPDATE useraccount SET role = 'Patient' WHERE accountID = %s",
+            (data.accountID,)
         )
 
         conn.commit()
 
         return {"success": True, "message": "Provider removed successfully"}
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+# =============================================================================
+# Profile management endpoints
+# =============================================================================
+
+@app.put("/update-self-info", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def update_self_info(
+        data: UpdateSelfInfo,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    """Patient self-update: name, email, phone, gender, insurance.
+    Updates useraccount.email and patient.* fields. DOB / username are not editable here.
+    Also checks for email uniqueness across other accounts.
+    """
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Email uniqueness check (other accounts)
+        cur.execute(
+            "SELECT accountID FROM useraccount WHERE email = %s AND accountID <> %s",
+            (data.email.strip(), current_user.accountID)
+        )
+        if cur.fetchone() is not None:
+            raise HTTPException(status_code=400, detail="That email is already in use by another account")
+
+        # Update email on the account
+        cur.execute(
+            "UPDATE useraccount SET email = %s WHERE accountID = %s",
+            (data.email.strip(), current_user.accountID)
+        )
+
+        # Update patient fields (only if a patient row exists for this account)
+        cur.execute(
+            "SELECT patientID FROM patient WHERE accountID = %s",
+            (current_user.accountID,)
+        )
+        patient_row = cur.fetchone()
+        if patient_row is not None:
+            cur.execute(
+                """UPDATE patient
+                   SET firstName = %s,
+                       lastName = %s,
+                       phoneNumber = %s,
+                       gender = %s,
+                       insuranceDetails = %s
+                   WHERE accountID = %s""",
+                (
+                    data.firstName.strip(),
+                    data.lastName.strip(),
+                    data.phoneNumber.strip(),
+                    data.gender.strip(),
+                    data.insuranceDetails.strip(),
+                    current_user.accountID,
+                )
+            )
+
+        conn.commit()
+        return {"success": True, "message": "Profile updated"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.put("/update-self-password", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def update_self_password(
+        data: UpdateSelfPassword,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+):
+    """Verify current password and update to new hashed password."""
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT password FROM useraccount WHERE accountID = %s",
+            (current_user.accountID,)
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Account not found")
+
+        if not verify_password(data.currentPassword.strip(), row[0]):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+        new_hash = hash_password(data.newPassword.strip())
+        cur.execute(
+            "UPDATE useraccount SET password = %s WHERE accountID = %s",
+            (new_hash, current_user.accountID)
+        )
+        conn.commit()
+        return {"success": True, "message": "Password updated"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.post("/add-patient-allergy", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def add_patient_allergy(data: AddPatientAllergy):
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # Confirm the patient exists
+        cur.execute("SELECT patientID FROM patient WHERE patientID = %s", (data.patientID,))
+        if cur.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Patient not found")
+
+        cur.execute(
+            "INSERT INTO patientallergy (patientID, allergen) VALUES (%s, %s)",
+            (data.patientID, data.allergen.strip())
+        )
+        conn.commit()
+        return {"success": True, "message": "Allergy added"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.delete("/delete-patient-allergy", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def delete_patient_allergy(data: DeletePatientAllergy):
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "DELETE FROM patientallergy WHERE allergyID = %s",
+            (data.allergyID,)
+        )
+        conn.commit()
+
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Allergy not found")
+        return {"success": True, "message": "Allergy removed"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.post("/add-patient-medical-history", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def add_patient_medical_history(data: AddPatientMedicalHistory):
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute("SELECT patientID FROM patient WHERE patientID = %s", (data.patientID,))
+        if cur.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Patient not found")
+
+        cur.execute(
+            "INSERT INTO patienthistory (patientID, diagnosis) VALUES (%s, %s)",
+            (data.patientID, data.diagnosis.strip())
+        )
+        conn.commit()
+        return {"success": True, "message": "Diagnosis added"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+@app.delete("/delete-patient-medical-history", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
+async def delete_patient_medical_history(data: DeletePatientMedicalHistory):
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "DELETE FROM patienthistory WHERE historyID = %s",
+            (data.historyID,)
+        )
+        conn.commit()
+
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Diagnosis not found")
+        return {"success": True, "message": "Diagnosis removed"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.post("/schedule-appointment", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def schedule_appointment(
+        data: ScheduleAppointment,
+        current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT patientID FROM patient WHERE accountID = %s",
+            (current_user.accountID,)
+        )
+        patient_row = cur.fetchone()
+
+        if patient_row is None:
+            raise HTTPException(status_code=404, detail="Patient record not found")
+
+        patient_id = patient_row[0]
+
+        cur.execute(
+            "SELECT departmentID FROM department WHERE departmentName = %s",
+            (data.department.strip(),)
+        )
+        dept_row = cur.fetchone()
+
+        if dept_row is None:
+            raise HTTPException(status_code=404, detail="Department not found")
+
+        department_id = dept_row[0]
+
+        cur.execute(
+            "SELECT providerID FROM healthcareprovider WHERE departmentID = %s ORDER BY RAND() LIMIT 1",
+            (department_id,)
+        )
+        provider_row = cur.fetchone()
+
+        if provider_row is None:
+            raise HTTPException(status_code=404, detail="No providers available in this department")
+
+        provider_id = provider_row[0]
+
+        appointment_datetime = f"{data.appointmentDate} {data.appointmentTime}:00"
+
+        cur.execute(
+            """INSERT INTO appointment
+                   (patientID, providerID, appointmentTimestamp, reason, status)
+               VALUES (%s, %s, %s, %s, 'Requested')""",
+            (patient_id, provider_id, appointment_datetime, data.reason.strip())
+        )
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": "Appointment scheduled successfully",
+            "appointmentID": cur.lastrowid
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
     finally:
         if cur:
             cur.close()

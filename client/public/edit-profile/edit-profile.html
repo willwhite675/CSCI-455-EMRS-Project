@@ -5,15 +5,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="edit-profile.css">
-    <title>Health Inc</title>
+    <title>Health Inc - Edit Profile</title>
 </head>
 <body>
 <div id="topNavContainer"></div>
 <div id="pageContent">
-<div id="sideNavContainer"></div>
-<div class="container">
+    <div id="sideNavContainer"></div>
+    <div class="container">
+        <div id="editProfileContent">
 
-</div>
+            <!-- Editable personal info -->
+            <div class="record-row">
+                <div class="record-group">
+                    <h2 class="patientInfoHeader">Personal Information</h2>
+                    <form id="personalInfoForm" class="profileForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">First Name</label>
+                                <input class="inputField" type="text" id="firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Last Name</label>
+                                <input class="inputField" type="text" id="lastName" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input class="inputField" type="email" id="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phoneNumber">Phone Number</label>
+                                <input class="inputField" type="tel" id="phoneNumber" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="gender">Gender</label>
+                                <select id="gender" required>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="insurance">Insurance Provider</label>
+                                <input class="inputField" type="text" id="insurance">
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" id="savePersonalButton">Save Changes</button>
+                        </div>
+                        <p id="personalInfoStatus" class="statusMessage"></p>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Read-only account fields -->
+            <div id="readOnlyData">
+                <div class="record-row">
+                    <div class="record-group">
+                        <h2 class="patientInfoHeader">Account</h2>
+                        <p><b>Username</b>: <span id="readonlyUsername"></span></p>
+                        <p><b>Date of Birth</b>: <span id="readonlyDOB"></span></p>
+                        <p><i>Contact a staff member to change these fields.</i></p>
+                    </div>
+                </div>
+
+                <!-- Read-only medical data -->
+                <div class="record-row">
+                    <div class="record-group">
+                        <h2 class="patientInfoHeader">Allergies</h2>
+                        <div id="allergiesDisplay">No allergy information</div>
+                        <p><i>Contact a provider to update your allergies.</i></p>
+                    </div>
+                    <div class="record-group">
+                        <h2 class="patientInfoHeader">Medical History</h2>
+                        <div id="medicalHistoryDisplay">No medical history</div>
+                        <p><i>Contact a provider to update your medical history.</i></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password change -->
+            <div class="record-row">
+                <div class="record-group">
+                    <h2 class="patientInfoHeader">Change Password</h2>
+                    <form id="passwordForm" class="profileForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="currentPassword">Current Password</label>
+                                <input class="inputField" type="password" id="currentPassword" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="newPassword">New Password</label>
+                                <input class="inputField" type="password" id="newPassword" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirm New Password</label>
+                                <input class="inputField" type="password" id="confirmPassword" required>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <button type="submit" id="savePasswordButton">Update Password</button>
+                        </div>
+                        <p id="passwordStatus" class="statusMessage"></p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 <script src="../topNavBar.js"></script>
@@ -25,5 +127,4 @@
         new Router('pageContent');
     }
 </script>
-
 </html>

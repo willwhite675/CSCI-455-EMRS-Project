@@ -1,0 +1,114 @@
+.appointmentButtons {
+    display: flex;
+    flex-direction: row;
+
+    button {
+        margin-right: 1rem;
+    }
+}
+
+#addAppointmentDialog {
+    border: none;
+    border-radius: 8px;
+    padding: 0;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+#addAppointmentDialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#closeDialogContainer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 1rem 1rem 0 1rem;
+}
+
+#closeAddAppointmentDialogButton {
+    background-color: transparent;
+    border: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+#closeAddAppointmentDialogButton:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+#addAppointmentForm {
+    padding: 0 2rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#addAppointmentForm p {
+    margin: 0 0 1rem 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+#addAppointmentForm label {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+#addAppointmentForm input,
+#addAppointmentForm select {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#addAppointmentForm input:focus,
+#addAppointmentForm select:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+#addAppointmentForm button[type="submit"] {
+    margin-top: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+#addAppointmentForm select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}

@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
     <nav class="topNavBar">
         <button class="topNavElement" id="shareButton">Share Records</button>
         <button class="topNavElement" id="printButton">Print</button>
-        <button class="topNavElement">Edit Profile</button>
     </nav>
     `;
     const navBar = document.getElementById('topNavContainer');
@@ -38,6 +37,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         else if (currentPath.includes('/management-panel/')) {
             pageNameElement.textContent = 'Management Panel';
+        }
+        else if (currentPath.includes('/edit-profile/')) {
+            pageNameElement.textContent = 'Edit Profile';
         }
     }
     const printButton = document.getElementById('printButton');
