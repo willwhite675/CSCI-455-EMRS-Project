@@ -1,0 +1,85 @@
+#editProfileContent {
+    width: 100%;
+    max-width: 60rem;
+    margin: 0 auto;
+}
+
+#editProfileTitle {
+    margin-bottom: 1rem;
+}
+
+.profileForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.profileForm .form-row {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.profileForm .form-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    max-width: 18rem;
+    text-align: left;
+}
+
+.profileForm .form-group label {
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.profileForm .inputField,
+.profileForm select {
+    font-size: 1rem;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    line-height: 1.5;
+    height: 2.5rem;
+}
+
+.profileForm .button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.profileForm button {
+    cursor: pointer;
+    background-color: transparent;
+    border: 2px solid black;
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    min-width: 12rem;
+}
+
+.profileForm button:hover {
+    background-color: black;
+    color: white;
+}
+
+.statusMessage {
+    text-align: center;
+    margin: 0.5rem 0 0 0;
+    min-height: 1.2rem;
+}
+
+.statusMessage.success {
+    color: #1b6e1b;
+}
+
+.statusMessage.error {
+    color: #b00020;
+}
+
+#allergiesDisplay p,
+#medicalHistoryDisplay p {
+    margin: 0.25rem 0;
+}

@@ -52,3 +52,51 @@
     min-width: 1rem;
     white-space: nowrap;
 }
+
+/* Medical data editor (allergies + history add/remove controls) */
+.medicalItem {
+    margin: 0.25rem 0;
+}
+.emptyMedical {
+    color: #555;
+    font-style: italic;
+}
+.removeMedicalButton,
+.removeHistoryButton {
+    margin-left: 0.5rem;
+    cursor: pointer;
+    background-color: transparent;
+    border: 1px solid black;
+    padding: 0 0.4rem;
+    font-size: 0.85rem;
+}
+.removeMedicalButton:hover,
+.removeHistoryButton:hover {
+    background-color: black;
+    color: white;
+}
+.medicalEditRow {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    padding: 0.5rem;
+    border-top: 1px dashed #888;
+    margin-top: 0.5rem;
+}
+.medicalEditRow input.inputField {
+    flex: 1;
+    max-width: 18rem;
+    height: 2rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+}
+.medicalEditRow button {
+    cursor: pointer;
+    background-color: transparent;
+    border: 2px solid black;
+    padding: 0 1rem;
+}
+.medicalEditRow button:hover {
+    background-color: black;
+    color: white;
+}

@@ -113,7 +113,7 @@ function loadPatientDashboard() {
                     </div>
                     <div class="record-group">
                         <h2 class="patientInfoHeader">Allergy Profile</h2>
-                        <p>${patientAllergiesData?.allergies?.length > 0 ? patientAllergiesData.allergies.map((a) => `<p>${a[0]}</p>`).join('') : 'No allergy information'}</p>
+                        <p>${patientAllergiesData?.allergies?.length > 0 ? patientAllergiesData.allergies.map((a) => `<p>${a.allergen ?? a[0]}</p>`).join('') : 'No allergy information'}</p>
                     </div>
                 </div>
                 <div class="record-row">
