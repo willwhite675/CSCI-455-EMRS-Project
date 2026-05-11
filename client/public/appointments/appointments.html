@@ -14,12 +14,47 @@
 <body>
 <div id="topNavContainer"></div>
 <div id="pageContent">
-<div id="sideNavContainer"></div>
-<div class="container">
-    <div id="appointmentContainer">
+    <div id="sideNavContainer"></div>
+    <div class="container">
+        <dialog id="addAppointmentDialog">
+            <div id="closeDialogContainer">
+                <button id="closeAddAppointmentDialogButton" class="standardButton">X</button>
+            </div>
+            <form id="addAppointmentForm">
+                <p>Please fill out all fields to add a new appointment.</p>
 
+                <label for="reason">Reason:</label>
+                <input type="text" id="reason" name="reason" required>
+
+                <label for="department">Department:</label>
+                <select id="department" name="department" required>
+                    <option value="">Select a department</option>
+                    <option value="Emergency & Trauma">Emergency & Trauma</option>
+                    <option value="Neurology & Mental Health">Neurology & Mental Health</option>
+                    <option value="Internal Medicine">Internal Medicine</option>
+                    <option value="Cybernetic Surgery">Cybernetic Surgery</option>
+                    <option value="General Pediatrics">General Pediatrics</option>
+                </select>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="appointmentDate">Appointment Date:</label>
+                        <input type="date" id="appointmentDate" name="appointmentDate" required min="">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appointmentTime">Appointment Time:</label>
+                        <input type="time" id="appointmentTime" name="appointmentTime" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="standardButton">Schedule Appointment</button>
+            </form>
+        </dialog>
+        <div id="appointmentContainer">
+
+        </div>
     </div>
-</div>
 </div>
 </body>
 <script src="../topNavBar.js"></script>

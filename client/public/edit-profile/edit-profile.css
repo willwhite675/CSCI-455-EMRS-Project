@@ -83,3 +83,6 @@
 #medicalHistoryDisplay p {
     margin: 0.25rem 0;
 }
+#readOnlyData:hover{
+    cursor: not-allowed;
+}

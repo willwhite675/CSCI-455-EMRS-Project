@@ -6,7 +6,7 @@ from pydantic import BaseModel
 import mariadb
 import os
 from dotenv import load_dotenv
-from security import hash_password, verify_password
+from .authUtils import hash_password, verify_password
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 app = FastAPI()
@@ -104,6 +104,12 @@ class AddPatientMedicalHistory(BaseModel):
 class DeletePatientMedicalHistory(BaseModel):
     historyID: int
 
+class ScheduleAppointment(BaseModel):
+    reason: str
+    department: str
+    appointmentDate: str
+    appointmentTime: str
+
 def get_connection():
     return mariadb.connect(
         host=os.getenv("DB_HOST"),
@@ -183,8 +189,8 @@ async def get_providers():
                         hp.departmentID,
                         d.departmentName
                     FROM healthcareprovider hp
-                        LEFT JOIN useraccount u ON hp.accountID = u.accountID
-                        LEFT JOIN department d ON hp.departmentID = d.departmentID
+                             LEFT JOIN useraccount u ON hp.accountID = u.accountID
+                             LEFT JOIN department d ON hp.departmentID = d.departmentID
                     """)
         providers = cur.fetchall()
         provider_list = [
@@ -259,16 +265,16 @@ async def get_self_allergies(current_user: Annotated[User, Depends(get_current_a
 
         cur.execute("""
                     SELECT patientID FROM patient WHERE accountID = %s
-                    
+
                     """, (current_user.accountID,))
-        
+
         patient_row = cur.fetchone()
         if not patient_row:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Patient record not found"
             )
-        
+
         patient_id = patient_row[0]
 
         cur.execute("""
@@ -344,7 +350,7 @@ async def get_patients():
         if conn:
             conn.close()
 
-@app.get("/get-departments", dependencies=[Depends(RoleChecker(["Admin"]))])
+@app.get("/get-departments", dependencies=[Depends(RoleChecker(["Patient", "Doctor", "Admin"]))])
 async def get_departments():
     conn = None
     cur = None
@@ -462,7 +468,7 @@ async def get_self_by_id(current_user: Annotated[User, Depends(get_current_activ
             (current_user.username,)
         )
         account_row = cur.fetchone()
-        
+
         if not account_row:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -474,13 +480,13 @@ async def get_self_by_id(current_user: Annotated[User, Depends(get_current_activ
             (account_row[0],)
         )
         row = cur.fetchone()
-        
+
         if not row:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Patient not found"
             )
-            
+
         return {
             "patientID": row[0],
             "firstName": row[1],
@@ -669,26 +675,39 @@ async def get_self_appointments(current_user: Annotated[User, Depends(get_curren
         cur = conn.cursor()
 
         cur.execute("""
-                    SELECT 
-                        a.appointmentID, 
-                        a.providerID, 
-                        pr.lastName, 
-                        a.appointmentTimestamp, 
-                        a.reason, 
-                        a.status 
-                    FROM 
-                        appointment a JOIN healthCareProvider pr ON a.providerID = pr.providerID 
-                    WHERE patientID = %s""",
-                    (current_user.accountID,))
+                    SELECT patientID FROM patient WHERE accountID = %s
+                    """, (current_user.accountID,))
+
+        patient_row = cur.fetchone()
+        if not patient_row:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient record not found"
+            )
+
+        patient_id = patient_row[0]
+
+        cur.execute("""
+                    SELECT
+                        a.appointmentID,
+                        a.providerID,
+                        pr.lastName,
+                        a.appointmentTimestamp,
+                        a.reason,
+                        a.status
+                    FROM
+                        appointment a JOIN healthCareProvider pr ON a.providerID = pr.providerID
+                    WHERE a.patientID = %s""",
+                    (patient_id,))
 
         appointments = cur.fetchall()
         appointment_list = [
             {
                 "appointmentID": row[0],
                 "providerID": row[1],
-                "doctorName": row[2],
-                "appointmentDate": row[3].strftime("%Y-%m-%d") if row[3] else None,
-                "appointmentTime": row[3].strftime("%H:%M") if row[3] else None,
+                "providerLastName": row[2],
+                "appointmentDate": row[3].date().strftime("%Y-%m-%d") if row[3] else None,
+                "appointmentTime": row[3].time().strftime("%H:%M") if row[3] else None,
                 "reason": row[4],
                 "status": row[5]
             }
@@ -711,7 +730,7 @@ async def get_self_appointments(current_user: Annotated[User, Depends(get_curren
             conn.close()
 
 @app.get("/get-patient-appointments", dependencies=[Depends(RoleChecker(["Provider", "Admin"]))])
-async def get_patient_appointments(patientID: str):
+async def get_patient_appointments():
     conn = None
     cur = None
 
@@ -732,9 +751,7 @@ async def get_patient_appointments(patientID: str):
                         a.status
                     FROM
                         appointment a JOIN healthCareProvider pr ON a.providerID = pr.providerID
-                        JOIN patient pa ON a.patientID = pa.patientID
-                    WHERE a.patientID = %s""",
-                    (patientID,))
+                                      JOIN patient pa ON a.patientID = pa.patientID""")
 
         appointments = cur.fetchall()
         appointment_list = [
@@ -745,13 +762,14 @@ async def get_patient_appointments(patientID: str):
                 "patientID": row[3],
                 "patientFirstName": row[4],
                 "patientLastName": row[5],
-                "appointmentTimestamp": row[6],
+                "appointmentDate": row[6].date().strftime("%Y-%m-%d") if row[6] else None,
+                "appointmentTime": row[6].time().strftime("%H:%M") if row[6] else None,
                 "reason": row[7],
                 "status": row[8]
             }
             for row in appointments]
 
-        return {"appointments": sorted(appointment_list, key=lambda x: x["appointmentTimestamp"], reverse=True)}
+        return {"appointments": sorted(appointment_list, key=lambda x: x["appointmentDate"] or "", reverse=True)}
 
     except HTTPException:
         raise
@@ -854,18 +872,18 @@ async def get_self_billing_history(current_user: Annotated[User, Depends(get_cur
         cur = conn.cursor()
 
         cur.execute("""
-            SELECT patientID FROM patient WHERE accountID = (
-                SELECT accountID FROM useraccount WHERE username = %s
-            )
-            """, (current_user.username,))
-        
+                    SELECT patientID FROM patient WHERE accountID = (
+                        SELECT accountID FROM useraccount WHERE username = %s
+                    )
+                    """, (current_user.username,))
+
         patient_row = cur.fetchone()
         if not patient_row:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Patient record not found"
             )
-        
+
         patient_id = patient_row[0]
 
         cur.execute(
@@ -911,14 +929,14 @@ async def my_labs(current_user: Annotated[User, Depends(get_current_active_user)
         cur = conn.cursor()
 
         cur.execute(
-            """SELECT 
-               labResultID,
-                testName,
-                testDate,
-                resultValue,
-                referenceRange,
-                status,
-                notes 
+            """SELECT
+                   labResultID,
+                   testName,
+                   testDate,
+                   resultValue,
+                   referenceRange,
+                   status,
+                   notes
                FROM labResult WHERE patientID = (SELECT patientID FROM patient WHERE accountID = %s)""",
             (current_user.accountID,)
         )
@@ -1512,6 +1530,81 @@ async def delete_patient_medical_history(data: DeletePatientMedicalHistory):
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Diagnosis not found")
         return {"success": True, "message": "Diagnosis removed"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error: {str(e)}"
+        )
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+@app.post("/schedule-appointment", dependencies=[Depends(RoleChecker(["Patient", "Provider", "Admin"]))])
+async def schedule_appointment(
+        data: ScheduleAppointment,
+        current_user: Annotated[User, Depends(get_current_active_user)]):
+    conn = None
+    cur = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        cur.execute(
+            "SELECT patientID FROM patient WHERE accountID = %s",
+            (current_user.accountID,)
+        )
+        patient_row = cur.fetchone()
+
+        if patient_row is None:
+            raise HTTPException(status_code=404, detail="Patient record not found")
+
+        patient_id = patient_row[0]
+
+        cur.execute(
+            "SELECT departmentID FROM department WHERE departmentName = %s",
+            (data.department.strip(),)
+        )
+        dept_row = cur.fetchone()
+
+        if dept_row is None:
+            raise HTTPException(status_code=404, detail="Department not found")
+
+        department_id = dept_row[0]
+
+        cur.execute(
+            "SELECT providerID FROM healthcareprovider WHERE departmentID = %s ORDER BY RAND() LIMIT 1",
+            (department_id,)
+        )
+        provider_row = cur.fetchone()
+
+        if provider_row is None:
+            raise HTTPException(status_code=404, detail="No providers available in this department")
+
+        provider_id = provider_row[0]
+
+        appointment_datetime = f"{data.appointmentDate} {data.appointmentTime}:00"
+
+        cur.execute(
+            """INSERT INTO appointment
+                   (patientID, providerID, appointmentTimestamp, reason, status)
+               VALUES (%s, %s, %s, %s, 'Requested')""",
+            (patient_id, provider_id, appointment_datetime, data.reason.strip())
+        )
+
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": "Appointment scheduled successfully",
+            "appointmentID": cur.lastrowid
+        }
 
     except HTTPException:
         raise

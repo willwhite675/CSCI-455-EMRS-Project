@@ -27,3 +27,18 @@
 .dt-container {
     padding: 0 1rem;
 }
+.payBillButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: 3px solid black;
+    transition: background-color 0.2s;
+}
+
+.payBillButton:hover {
+    background-color: black;
+}
+
+#billingTable td:last-child {
+    text-align: center;
+}

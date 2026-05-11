@@ -53,8 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (userType === "Patient") {
         appointMentHTML = `
             <div class="appointmentButtons">
-                <button class="standardButton">Schedule Appointment</button>
-                <button class="standardButton">Requested Appointments</button>
+                <button id="scheduleAppointmentButton" class="standardButton">Schedule Appointment</button>
             </div>
             <table id="appointmentTable">
                     <thead>
@@ -89,8 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (userType === "Provider" || userType === "Admin") {
         appointMentHTML = `
             <div class="appointmentButtons">
-                <button class="standardButton">Schedule Appointment</button>
-                <button class="standardButton">Requested Appointments</button>
+                <button id="scheduleAppointmentButton" class="standardButton">Schedule Appointment</button>
             </div>
             <table id="patientAppointmentTable">
                 <thead>
@@ -126,5 +124,142 @@ document.addEventListener("DOMContentLoaded", () => {
     const appointments = document.getElementById('appointmentContainer');
     if (appointments) {
         appointments.innerHTML = appointMentHTML;
+        // Set up dialog handlers after the HTML has been inserted
+        setTimeout(() => {
+            setupDialogHandlers();
+        }, 0);
     }
 });
+function setupDialogHandlers() {
+    const dialog = document.getElementById('addAppointmentDialog');
+    const scheduleButton = document.getElementById('scheduleAppointmentButton');
+    const closeButton = document.getElementById('closeAddAppointmentDialogButton');
+    const form = document.getElementById('addAppointmentForm');
+    const dateInput = document.getElementById('appointmentDate');
+    // Set minimum date to today
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+    }
+    // Open dialog when Schedule Appointment button is clicked
+    if (scheduleButton) {
+        scheduleButton.addEventListener('click', () => {
+            if (dialog) {
+                // Reset min date each time dialog opens
+                if (dateInput) {
+                    const today = new Date().toISOString().split('T')[0];
+                    dateInput.setAttribute('min', today);
+                }
+                dialog.showModal();
+            }
+        });
+    }
+    // Close dialog when X button is clicked
+    if (closeButton) {
+        closeButton.addEventListener('click', () => {
+            if (dialog) {
+                dialog.close();
+                form?.reset();
+            }
+        });
+    }
+    // Handle form submission
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const reason = document.getElementById('reason').value;
+            const department = document.getElementById('department').value;
+            const appointmentDate = document.getElementById('appointmentDate').value;
+            const appointmentTime = document.getElementById('appointmentTime').value;
+            // Validate that the date/time is not in the past
+            const selectedDateTime = new Date(`${appointmentDate}T${appointmentTime}`);
+            const now = new Date();
+            if (selectedDateTime < now) {
+                alert('Cannot schedule appointments in the past. Please select a future date and time.');
+                return;
+            }
+            const formData = {
+                reason: reason,
+                department: department,
+                appointmentDate: appointmentDate,
+                appointmentTime: appointmentTime
+            };
+            // Submit appointment data to your API
+            fetch('http://localhost:8001/schedule-appointment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken3}`
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                if (data.success) {
+                    console.log('Appointment scheduled successfully:', data);
+                    alert('Appointment scheduled successfully!');
+                    dialog.close();
+                    form.reset();
+                    // Refresh the appointments list
+                    const userType = sessionStorage.getItem("userType");
+                    if (userType === "Patient") {
+                        // Reload appointments
+                        fetch(`http://localhost:8001/get-self-appointments`, {
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${accessToken3}`
+                            }
+                        })
+                            .then(data => data.json())
+                            .then(data => {
+                            myAppointmentData = data;
+                            if (myAppointmentDataTable) {
+                                myAppointmentDataTable.destroy();
+                            }
+                            getMyAppointments();
+                        });
+                    }
+                    else {
+                        // Reload appointments
+                        fetch(`http://localhost:8001/get-patient-appointments`, {
+                            method: "GET",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${accessToken3}`
+                            }
+                        })
+                            .then(data => data.json())
+                            .then(data => {
+                            patientAppointmentData = data;
+                            if (patientAppointmentDataTable) {
+                                patientAppointmentDataTable.destroy();
+                            }
+                            getPatientAppointments();
+                        });
+                    }
+                }
+                else {
+                    alert(data.message || 'Failed to schedule appointment. Please try again.');
+                }
+            })
+                .catch(error => {
+                console.error('Error scheduling appointment:', error);
+                alert('Failed to schedule appointment. Please try again.');
+            });
+        });
+    }
+    // Close dialog when clicking outside of it
+    if (dialog) {
+        dialog.addEventListener('click', (e) => {
+            const dialogDimensions = dialog.getBoundingClientRect();
+            if (e.clientX < dialogDimensions.left ||
+                e.clientX > dialogDimensions.right ||
+                e.clientY < dialogDimensions.top ||
+                e.clientY > dialogDimensions.bottom) {
+                dialog.close();
+                form?.reset();
+            }
+        });
+    }
+}

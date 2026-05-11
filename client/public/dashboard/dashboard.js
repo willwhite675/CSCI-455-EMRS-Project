@@ -100,86 +100,87 @@ function loadPatientDashboard() {
         .then(() => {
         dashboardTitle.textContent = `Welcome ${patientData.firstName.charAt(0).toUpperCase() + patientData.firstName.slice(1)}!`;
         dashboardContent.innerHTML = `
-                <div class="record-row">
-                    <div class="record-group">
-                        <h2 class="patientInfoHeader">Patient Info</h2>
-                        <span>
-                            <p><b>Name</b>: ${patientData.firstName} ${patientData.lastName}</p>
-                            <p><b>ID</b>: ${patientData.patientID}</p>
-                            <p><b>Phone Number</b>: ${patientData.phoneNumber}</p>
-                            <p><b>Gender</b>: ${patientData.gender}</p>
-                            <p><b>DOB</b>: ${patientData.DOB}</p>
-                        </span>
+                    <div class="record-row">
+                        <div class="record-group">
+                            <h2 class="patientInfoHeader">Patient Info</h2>
+                            <span>
+                                <p><b>Name</b>: ${patientData.firstName} ${patientData.lastName}</p>
+                                <p><b>ID</b>: ${patientData.patientID}</p>
+                                <p><b>Phone Number</b>: ${patientData.phoneNumber}</p>
+                                <p><b>Gender</b>: ${patientData.gender}</p>
+                                <p><b>DOB</b>: ${patientData.DOB}</p>
+                            </span>
+                        </div>
+                        <div class="record-group">
+                            <h2 class="patientInfoHeader">Allergy Profile</h2>
+                            <p>${patientAllergiesData?.allergies?.length > 0 ? patientAllergiesData.allergies.map((a) => `<p>${a[0]}</p>`).join('') : 'No allergy information'}</p>
+                        </div>
                     </div>
-                    <div class="record-group">
-                        <h2 class="patientInfoHeader">Allergy Profile</h2>
-                        <p>${patientAllergiesData?.allergies?.length > 0 ? patientAllergiesData.allergies.map((a) => `<p>${a.allergen ?? a[0]}</p>`).join('') : 'No allergy information'}</p>
+                    <div class="record-row">
+                        <div class="record-group">
+                            <h2 class="patientInfoHeader">Insurance</h2>
+                            <p>${patientData.insuranceDetails || 'No insurance information'}</p>
+                        </div>
+                        <div class="record-group">
+                            <h2 class="patientInfoHeader">Medical History</h2>
+                            <p>${patientMedicalHistoryData?.medicalHistory?.length > 0 ? patientMedicalHistoryData.medicalHistory.map((h) => `<p>${h.diagnosis}</p>`).join('') : 'No medical history'}</p>
+                        </div>
                     </div>
-                </div>
-                <div class="record-row">
-                    <div class="record-group">
-                        <h2 class="patientInfoHeader">Insurance</h2>
-                        <p>${patientData.insuranceDetails || 'No insurance information'}</p>
+                    <div class="record-row">
+                        <div class="record-group">
+                            <h2>Recent Visits</h2>
+                            <table id="recentVisitsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Purpose</th>
+                                        <th>Doctor</th>
+                                        <th>Walk-in</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="visitsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="record-group">
-                        <h2 class="patientInfoHeader">Medical History</h2>
-                        <p>${patientMedicalHistoryData?.medicalHistory?.length > 0 ? patientMedicalHistoryData.medicalHistory.map((h) => `<p>${h.diagnosis}</p>`).join('') : 'No medical history'}</p>
+                    <div class="record-row">
+                        <div class="record-group">
+                            <h2>Billing</h2>
+                            <table id="billingTable">
+                                <thead>
+                                    <tr>
+                                        <th>Bill ID</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billingTableBody">
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                <div class="record-row">
-                    <div class="record-group">
-                        <h2>Recent Visits</h2>
-                        <table id="recentVisitsTable">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Purpose</th>
-                                    <th>Doctor</th>
-                                    <th>Walk-in</th>
-                                </tr>
-                            </thead>
-                            <tbody id="visitsTableBody">
-                            </tbody>
-                        </table>
+                    <div class="record-row">
+                        <div class="record-group">
+                            <h2>Lab Results</h2>
+                            <table id="labResultsTable">
+                                <thead id="labResultsHeader">
+                                    <tr id="labResultsLabels">
+                                        <th>Lab ID</th>
+                                        <th>Test Date</th>
+                                        <th>Test Name</th>
+                                        <th>Result</th>
+                                        <th>Range</th>
+                                        <th>Status</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="labResultsBody"></tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
-                <div class="record-row">
-                    <div class="record-group">
-                        <h2>Billing</h2>
-                        <table id="billingTable">
-                            <thead>
-                                <tr>
-                                    <th>Bill ID</th>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="billingTableBody">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="record-row">
-                    <div class="record-group">
-                        <h2>Lab Results</h2>
-                        <table id="labResultsTable">
-                            <thead id="labResultsHeader">
-                                <tr id="labResultsLabels">
-                                    <th>Lab ID</th>
-                                    <th>Test Date</th>
-                                    <th>Test Name</th>
-                                    <th>Result</th>
-                                    <th>Range</th>
-                                    <th>Status</th>
-                                    <th>Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody id="labResultsBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
+                `;
     })
         .then(() => {
         const visitsTableBody = document.getElementById("visitsTableBody");
@@ -198,14 +199,18 @@ function loadPatientDashboard() {
             visitsTableBody?.insertAdjacentHTML("beforeend", visitRow);
         });
         patientBillingData?.billingHistory?.forEach((bill) => {
+            const payButton = (bill.status === 'Pending' || bill.status === 'Overdue')
+                ? `<button class="payBillButton standardButton" data-bill-id="${bill.billingID}">Pay Bill</button>`
+                : '';
             const billRow = `
-                    <tr>
-                        <td>${bill.billingID}</td>
-                        <td>${formatDate2(bill.visitTimeStamp)}</td>
-                        <td>$${bill.amount}</td>
-                        <td>${bill.status}</td>
-                    </tr>
-                `;
+                        <tr>
+                            <td>${bill.billingID}</td>
+                            <td>${formatDate2(bill.visitTimeStamp)}</td>
+                            <td>$${bill.amount}</td>
+                            <td>${bill.status}</td>
+                            <td>${payButton}</td>
+                        </tr>
+                    `;
             billingTableBody?.insertAdjacentHTML("beforeend", billRow);
         });
         patientLabResultsData?.labs?.forEach((labResult) => {
@@ -232,6 +237,8 @@ function loadPatientDashboard() {
             labResultsTable = $('#labResultsTable').DataTable({
                 order: [[1, "desc"]],
             });
+            // Add event listeners for Pay Bill buttons
+            attachPayBillListeners();
         }, 0);
     })
         .catch(error => {
@@ -241,6 +248,19 @@ function loadPatientDashboard() {
 }
 function formatDate2(dateString) {
     return new Date(dateString).toISOString().split('T')[0];
+}
+function attachPayBillListeners() {
+    const payButtons = document.querySelectorAll('.payBillButton');
+    payButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const billId = e.target.getAttribute('data-bill-id');
+            showPaymentMessage(billId);
+        });
+    });
+}
+function showPaymentMessage(billId) {
+    alert('This is where the payment screen would pop up where a user can connect their bank account');
 }
 document.addEventListener("DOMContentLoaded", () => {
     if (!accessToken2) {

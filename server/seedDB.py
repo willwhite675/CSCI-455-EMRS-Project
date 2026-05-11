@@ -33,7 +33,7 @@ def create_default_admin():
         provider_pass = hash_password("Dave")
         cursor.execute(
             "INSERT IGNORE INTO UserAccount (username, password, email, role) VALUES (?, ?, ?, ?)",
-            ('Dave', provider_pass, 'dave@dave.com', 'Dave')
+            ('Dave', provider_pass, 'dave@dave.com', 'Admin')
         )
         cursor.execute("SELECT accountID FROM UserAccount WHERE username = 'Dave'")
         prov_account_id = cursor.fetchone()[0]
